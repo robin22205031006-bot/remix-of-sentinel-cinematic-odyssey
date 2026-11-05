@@ -1,0 +1,8 @@
+[
+{"capability":"code+pages","source":"github","outcome":"migrate","status":"done","next_action":"none"},
+{"capability":"schema","source":"cloud","outcome":"migrate","status":"done","next_action":"none"},
+{"capability":"vault/admin pages","source":"missing from repo","outcome":"rebuilt","status":"done","next_action":"user review"},
+{"capability":"records (entities, timeline, posts, vault files)","source":"old cloud","outcome":"migrate","status":"pending","next_action":"user exports CSV/JSON"},
+{"capability":"users","source":"old cloud","outcome":"migrate","status":"pending","next_action":"users sign up again; admin email auto-granted"},
+{"capability":"signed-in verification","source":"-","outcome":"verify","status":"pending","next_action":"needs a confirmed account"}
+]

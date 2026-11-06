@@ -92,6 +92,45 @@ export type Database = {
         }
         Relationships: []
       }
+      character_relationships: {
+        Row: {
+          character_id_1: string
+          character_id_2: string
+          created_at: string
+          id: string
+          relationship_type: string
+        }
+        Insert: {
+          character_id_1: string
+          character_id_2: string
+          created_at?: string
+          id?: string
+          relationship_type: string
+        }
+        Update: {
+          character_id_1?: string
+          character_id_2?: string
+          created_at?: string
+          id?: string
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_relationships_c1_fkey"
+            columns: ["character_id_1"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_relationships_c2_fkey"
+            columns: ["character_id_2"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           author_id: string
@@ -195,7 +234,22 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "entities_parent_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entities_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entity_memberships: {
         Row: {
@@ -278,6 +332,36 @@ export type Database = {
           },
         ]
       }
+      episodes: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          series: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          series?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          series?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ingest_jobs: {
         Row: {
           created_at: string
@@ -330,6 +414,113 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      map_locations: {
+        Row: {
+          battles: string
+          created_at: string
+          era: string | null
+          faction: string | null
+          id: string
+          name: string
+          pos_x: number
+          pos_y: number
+          report: string
+          sentinels: string
+          updated_at: string
+        }
+        Insert: {
+          battles?: string
+          created_at?: string
+          era?: string | null
+          faction?: string | null
+          id?: string
+          name: string
+          pos_x?: number
+          pos_y?: number
+          report?: string
+          sentinels?: string
+          updated_at?: string
+        }
+        Update: {
+          battles?: string
+          created_at?: string
+          era?: string | null
+          faction?: string | null
+          id?: string
+          name?: string
+          pos_x?: number
+          pos_y?: number
+          report?: string
+          sentinels?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pdf_chunks: {
+        Row: {
+          chunk_index: number
+          content_text: string
+          created_at: string
+          embedding: string | null
+          id: string
+          pdf_id: string
+        }
+        Insert: {
+          chunk_index: number
+          content_text: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          pdf_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content_text?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          pdf_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_chunks_pdf_fkey"
+            columns: ["pdf_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_vault"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_vault: {
+        Row: {
+          chunk_count: number
+          file_name: string
+          id: string
+          status: string
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          chunk_count?: number
+          file_name: string
+          id?: string
+          status?: string
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          chunk_count?: number
+          file_name?: string
+          id?: string
+          status?: string
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
       }
       post_votes: {
         Row: {
@@ -504,159 +695,6 @@ export type Database = {
         }
         Relationships: []
       }
-      episodes: {
-        Row: {
-          body: string
-          created_at: string
-          id: string
-          series: string | null
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          body?: string
-          created_at?: string
-          id?: string
-          series?: string | null
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          body?: string
-          created_at?: string
-          id?: string
-          series?: string | null
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      character_relationships: {
-        Row: {
-          character_id_1: string
-          character_id_2: string
-          created_at: string
-          id: string
-          relationship_type: string
-        }
-        Insert: {
-          character_id_1: string
-          character_id_2: string
-          created_at?: string
-          id?: string
-          relationship_type: string
-        }
-        Update: {
-          character_id_1?: string
-          character_id_2?: string
-          created_at?: string
-          id?: string
-          relationship_type?: string
-        }
-        Relationships: []
-      }
-      map_locations: {
-        Row: {
-          battles: string
-          created_at: string
-          era: string | null
-          faction: string | null
-          id: string
-          name: string
-          pos_x: number
-          pos_y: number
-          report: string
-          sentinels: string
-          updated_at: string
-        }
-        Insert: {
-          battles?: string
-          created_at?: string
-          era?: string | null
-          faction?: string | null
-          id?: string
-          name: string
-          pos_x?: number
-          pos_y?: number
-          report?: string
-          sentinels?: string
-          updated_at?: string
-        }
-        Update: {
-          battles?: string
-          created_at?: string
-          era?: string | null
-          faction?: string | null
-          id?: string
-          name?: string
-          pos_x?: number
-          pos_y?: number
-          report?: string
-          sentinels?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      pdf_chunks: {
-        Row: {
-          chunk_index: number
-          content_text: string
-          created_at: string
-          embedding: string | null
-          id: string
-          pdf_id: string
-        }
-        Insert: {
-          chunk_index: number
-          content_text: string
-          created_at?: string
-          embedding?: string | null
-          id?: string
-          pdf_id: string
-        }
-        Update: {
-          chunk_index?: number
-          content_text?: string
-          created_at?: string
-          embedding?: string | null
-          id?: string
-          pdf_id?: string
-        }
-        Relationships: []
-      }
-      pdf_vault: {
-        Row: {
-          chunk_count: number
-          file_name: string
-          id: string
-          status: string
-          storage_path: string
-          uploaded_at: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          chunk_count?: number
-          file_name: string
-          id?: string
-          status?: string
-          storage_path: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          chunk_count?: number
-          file_name?: string
-          id?: string
-          status?: string
-          storage_path?: string
-          uploaded_at?: string
-          uploaded_by?: string | null
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           id: string
@@ -716,6 +754,16 @@ export type Database = {
       }
       is_banned: { Args: { _uid: string }; Returns: boolean }
       is_staff: { Args: { _uid: string }; Returns: boolean }
+      match_pdf_chunks: {
+        Args: { match_count?: number; query_embedding: string }
+        Returns: {
+          chunk_index: number
+          content_text: string
+          file_name: string
+          pdf_id: string
+          similarity: number
+        }[]
+      }
       merge_entities: {
         Args: { primary_id: string; secondary_id: string }
         Returns: Json
@@ -723,16 +771,6 @@ export type Database = {
       remap_series_characters: {
         Args: { p_primary: string; p_secondary: string }
         Returns: undefined
-      }
-      match_pdf_chunks: {
-        Args: { query_embedding: string; match_count?: number }
-        Returns: {
-          pdf_id: string
-          file_name: string
-          chunk_index: number
-          content_text: string
-          similarity: number
-        }[]
       }
     }
     Enums: {

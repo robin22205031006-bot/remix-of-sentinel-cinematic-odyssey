@@ -14,6 +14,7 @@ import { embedVaultTexts } from "@/lib/pdf-vault.functions";
 import { chunkText } from "@/lib/pdf-chunks";
 import { parsePdf } from "@/utils/pdfParser";
 import { sfx } from "@/lib/scu-audio";
+import { ListSkeleton } from "@/components/route-skeleton";
 import type { Tables } from "@/integrations/supabase/types";
 
 type PdfVaultDoc = Tables<"pdf_vault">;
@@ -235,7 +236,7 @@ function Vault() {
         </section>
       )}
 
-      {isLoading ? <p className="text-muted-foreground">Loading…</p> : !data?.length ? (
+      {isLoading ? <ListSkeleton /> : !data?.length ? (
         <p className="text-muted-foreground">No documents in the vault yet.</p>
       ) : (
         <ul className="grid gap-3">

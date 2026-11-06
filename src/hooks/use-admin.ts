@@ -3,12 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { ensureSuperadminAccess } from "@/lib/roles.functions";
 import { isSuperadminEmail } from "@/lib/roles";
 
+const SESSION_TIMEOUT_MS = 5_000;
+
+function withTimeout<T>(p: PromiseLike<T>, ms: number): Promise<T | "__timeout__"> {
+  return Promise.race([p, new Promise<"__timeout__">((r) => setTimeout(() => r("__timeout__"), ms))]);
+}
+
 export function useSession() {
   return useQuery({
     queryKey: ["session"],
     queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session?.user ?? null;
+      // Never let a slow Supabase round-trip pin the app in a loading state:
+      // on timeout we resolve with no session and let RLS/public UI render.
+      const res = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS);
+      if (res === "__timeout__") return null;
+      return res.data.session?.user ?? null;
     },
     staleTime: 60_000,
   });
@@ -29,7 +38,7 @@ export function useRoles() {
       if (superadmin) {
         // Bootstrap a real `admin` row so RLS-protected writes keep working.
         try {
-          await ensureSuperadminAccess({ data: {} });
+          await withTimeout(ensureSuperadminAccess({ data: {} }), SESSION_TIMEOUT_MS);
         } catch {
           // The role row may already exist or the server may be unreachable; roles below still apply.
         }

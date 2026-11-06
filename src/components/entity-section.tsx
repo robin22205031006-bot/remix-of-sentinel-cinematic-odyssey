@@ -18,6 +18,7 @@ import { sfx } from "@/lib/scu-audio";
 import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 import { useSectionStyle } from "@/hooks/use-typography";
 import { EntityDialog } from "./entity-dialog";
+import { EntityGridSkeleton } from "./route-skeleton";
 import { EntityLinks } from "./entity-links";
 import { SeriesAppearances } from "./series-appearances";
 import { MergeEntityDialog } from "./merge-entity-dialog";
@@ -340,7 +341,7 @@ export function EntitySection({
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <EntityGridSkeleton />
       ) : list.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">{data?.length ? "No matches." : "Nothing in the archive yet."}</p>
       ) : (

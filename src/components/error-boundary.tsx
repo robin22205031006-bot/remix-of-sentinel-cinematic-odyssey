@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="max-w-md text-center">
           <p className="text-[11px] uppercase tracking-[0.3em] text-accent">Archive integrity</p>
-          <h1 className="mt-3 text-3xl font-medium glow-text">Signal lost</h1>
+          <h1 className="mt-3 text-3xl font-medium glow-text">Failed to load SCU Archives</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Something broke while rendering the archive. Your data is safe — reload to reconnect.
           </p>
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
             onClick={() => window.location.reload()}
             className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-6 py-2.5 text-sm font-medium text-accent-foreground transition-transform hover:scale-[1.03] active:scale-95"
           >
-            Reload application
+            Reload App
           </button>
         </div>
       </div>

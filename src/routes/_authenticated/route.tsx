@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
-const AUTH_TIMEOUT_MS = 3_000;
+const AUTH_TIMEOUT_MS = 5_000;
 
 function withTimeout<T>(p: PromiseLike<T>, ms: number): Promise<T | "__timeout__"> {
   return Promise.race([p, new Promise<"__timeout__">((r) => setTimeout(() => r("__timeout__"), ms))]);

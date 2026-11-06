@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { entitiesQuery, type Entity, type EntityMembership } from "@/lib/entities";
+import { PanelSkeleton } from "@/components/route-skeleton";
 
 const ALL_KINDS: Entity["kind"][] = ["character", "organization", "clan", "bloodline", "faction"];
 
@@ -48,7 +49,7 @@ export function RelationshipGraph() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
-  const { data: entities } = useQuery({ ...entitiesQuery(ALL_KINDS), staleTime: 60_000 });
+  const { data: entities, isLoading } = useQuery({ ...entitiesQuery(ALL_KINDS), staleTime: 60_000 });
   const { data: memberships } = useQuery({
     queryKey: ["graph-memberships"],
     staleTime: 30_000,
@@ -134,6 +135,9 @@ export function RelationshipGraph() {
       </div>
 
       <div className="relative">
+        {isLoading ? (
+          <PanelSkeleton className="h-[70vh]" />
+        ) : (
         <div className="glass overflow-hidden rounded-2xl">
           <svg viewBox={`0 0 ${W} ${H}`} className="block h-[70vh] w-full" role="img" aria-label="Entity relationship graph">
             {/* Edges */}
@@ -191,6 +195,7 @@ export function RelationshipGraph() {
             })}
           </svg>
         </div>
+        )}
 
         {/* Selection panel */}
         {selected && (

@@ -25,6 +25,8 @@ import { SketchGallery } from "./sketch-gallery";
 import { StatRadar } from "./stat-radar";
 import { CompareSentinel } from "./compare-sentinel";
 import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
+import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
+import { ABILITY_GROUP_LABELS, abilityDef, sortAbilities, type AbilityGroup } from "@/lib/abilities";
 import { exportDossierPdf, type DossierGroup } from "@/lib/export-dossier";
 import { getCombatStats } from "@/lib/combat-stats";
 
@@ -59,6 +61,9 @@ const CardBody = memo(function CardBody({ e, showKind }: { e: Entity; showKind: 
       </div>
       <h2 className="mt-1 truncate text-2xl font-medium">{e.name}</h2>
       <p className="truncate text-sm text-muted-foreground">{[e.alias, e.role].filter(Boolean).join(" · ") || "—"}</p>
+      {e.kind === "character" && (e.abilities?.length ?? 0) > 0 && (
+        <div className="mt-1.5"><AbilityBadgeRow abilities={sortAbilities(e.abilities ?? [])} max={3} /></div>
+      )}
     </div>
   );
 });
@@ -186,6 +191,25 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             <div className="rounded-xl border border-white/10 bg-secondary/20 p-4">
               <h4 className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Combat metrics</h4>
               <StatRadar a={combat} nameA={e.name} size={230} />
+            </div>
+          )}
+          {(e.abilities?.length ?? 0) > 0 && (
+            <div className="rounded-xl border border-white/10 bg-secondary/20 p-4">
+              <h4 className="mb-3 text-[11px] uppercase tracking-widest text-muted-foreground">Abilities &amp; biological traits</h4>
+              <div className="grid gap-3">
+                {(["power", "beast", "element", "role", "art"] as AbilityGroup[]).map((g) => {
+                  const items = sortAbilities(e.abilities ?? []).filter((a) => abilityDef(a).group === g);
+                  if (!items.length) return null;
+                  return (
+                    <div key={g}>
+                      <p className="mb-1 text-[10px] uppercase tracking-widest text-accent">{ABILITY_GROUP_LABELS[g]}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map((a) => <AbilityBadge key={a} name={a} />)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
           {stats.length > 0 && (

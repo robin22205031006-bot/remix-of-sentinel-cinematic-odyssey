@@ -12,6 +12,7 @@ import { sfx } from "@/lib/scu-audio";
 import { CHARACTER_STATUSES, GROUP_LINK_KINDS, GROUP_STATUSES, RELATIONSHIP_LABELS, RELATIONSHIP_TYPES, characterRelationshipsQuery, entitiesQuery, fileToDataUrl, type Entity } from "@/lib/entities";
 import { COMBAT_STATS, getCombatStats, splitStats, type CombatStats } from "@/lib/combat-stats";
 import { mergeLocks } from "@/lib/lore-merge";
+import { AbilityPicker } from "./ability-picker";
 
 type Kind = Entity["kind"];
 const FIELDS = ["name", "alias", "role", "status", "category", "description", "image_url", "stats", "sketches"] as const;
@@ -51,6 +52,7 @@ export function EntityDialog({
     stats: entity ? Object.entries((entity.stats as Record<string, string>) ?? {}).map(([k, v]) => `${k}: ${v}`).join("\n") : "",
     sketches: entity?.sketches ?? [],
     parent_id: entity?.parent_id ?? "",
+    abilities: entity?.abilities ?? [],
   });
   const [relTarget, setRelTarget] = useState("");
   const [relType, setRelType] = useState<string>(RELATIONSHIP_TYPES[0]);
@@ -122,6 +124,7 @@ export function EntityDialog({
       image_url: form.image_url || null,
       stats,
       sketches: form.sketches,
+      abilities: isChar ? form.abilities : (entity?.abilities ?? []),
       parent_id: isChar ? null : form.parent_id || null,
     };
     let error;
@@ -212,6 +215,9 @@ export function EntityDialog({
                 </div>
               ))}
             </div>
+          )}
+          {isChar && (
+            <AbilityPicker value={form.abilities} onChange={(abilities) => setForm({ ...form, abilities })} />
           )}
           <div className="grid gap-1.5"><Label>{isChar ? "Additional stats (one per line, e.g. \"Rank: Warden\")" : "Stats (one per line, e.g. \"Power: 9\")"}</Label><Textarea rows={3} value={form.stats} onChange={set("stats")} /></div>
           <div className="grid gap-1.5">

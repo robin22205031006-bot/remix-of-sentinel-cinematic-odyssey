@@ -227,6 +227,48 @@ export type Database = {
           },
         ]
       }
+      entity_relations: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          rel: string
+          source_id: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          rel: string
+          source_id: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          rel?: string
+          source_id?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_relations_source_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_relations_target_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingest_jobs: {
         Row: {
           created_at: string

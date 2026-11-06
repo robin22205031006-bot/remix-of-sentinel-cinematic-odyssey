@@ -6,6 +6,11 @@ export type Entity = Tables<"entities">;
 export type LoreNote = Tables<"lore_notes">;
 export type TimelineEvent = Tables<"timeline_events">;
 export type EntityMembership = Tables<"entity_memberships">;
+export type EntityRelation = Tables<"entity_relations">;
+
+/** Directed relation kinds used by the clan/lineage graph. */
+export const REL_TYPES = ["commands", "ally", "rival", "mentor", "kin"] as const;
+export type RelType = (typeof REL_TYPES)[number];
 
 /** Kinds that can act as the "group" side of a membership link. */
 export const GROUP_LINK_KINDS: Entity["kind"][] = ["organization", "clan", "bloodline", "faction"];
@@ -75,6 +80,19 @@ export const groupLinksQuery = (groupId: string) =>
       return data;
     },
   });
+
+export const entityRelationsQuery = queryOptions({
+  queryKey: ["entity-relations"],
+  staleTime: 30_000,
+  queryFn: async () => {
+    const { data, error } = await supabase.from("entity_relations").select("*");
+    if (error) {
+      if (/entity_relations|schema cache|does not exist/i.test(error.message)) return [] as EntityRelation[];
+      throw error;
+    }
+    return data;
+  },
+});
 
 export const notesQuery = (entityId: string) =>
   queryOptions({

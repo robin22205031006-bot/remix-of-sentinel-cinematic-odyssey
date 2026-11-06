@@ -37,8 +37,10 @@ function AuthPage() {
     if (busy) return;
     setBusy(true);
     try {
+    // Never leave the form spinning forever on a stalled network.
+    const deadline = new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 10_000));
     if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await Promise.race([supabase.auth.signInWithPassword({ email, password }), deadline]);
       setBusy(false);
       if (error) {
         toast.error(error.message);
@@ -47,7 +49,7 @@ function AuthPage() {
       if (hasNext) window.location.assign(next);
       else nav({ to: "/characters" });
     } else {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: new URL("/auth", window.location.origin).href + (hasNext ? `?next=${encodeURIComponent(next)}` : "") } });
+      const { error } = await Promise.race([supabase.auth.signUp({ email, password, options: { emailRedirectTo: new URL("/auth", window.location.origin).href + (hasNext ? `?next=${encodeURIComponent(next)}` : "") } }), deadline]);
       setBusy(false);
       if (error) {
         toast.error(error.message);

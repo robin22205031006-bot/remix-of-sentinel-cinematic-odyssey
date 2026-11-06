@@ -14,13 +14,15 @@ const { count, size, warnings } = await generateSW({
   navigateFallbackDenylist: [/^\/api\//, /\/auth\//],
   skipWaiting: true,
   clientsClaim: true,
+  cleanupOutdatedCaches: true,
+  navigationPreload: true,
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/.*\.(lovable\.cloud|supabase\.co)\//,
       handler: "NetworkFirst",
       options: {
         cacheName: "scu-api-cache",
-        networkTimeoutSeconds: 5,
+        networkTimeoutSeconds: 3,
         expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 7 },
         cacheableResponse: { statuses: [0, 200] },
       },

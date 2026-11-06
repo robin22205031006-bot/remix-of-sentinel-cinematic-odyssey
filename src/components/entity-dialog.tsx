@@ -138,7 +138,7 @@ export function EntityDialog({
           <div className="grid gap-1.5"><Label>Stats (one per line, e.g. "Power: 9")</Label><Textarea rows={3} value={form.stats} onChange={set("stats")} /></div>
           <div className="grid gap-1.5">
             <Label>{isChar ? "Avatar" : "Emblem"}</Label>
-            {form.image_url && <img src={form.image_url} alt="" className="h-20 w-20 rounded-md object-cover" />}
+            {form.image_url && <img src={form.image_url} alt="" loading="lazy" decoding="async" className="h-20 w-20 rounded-md object-cover" />}
             <div className="flex gap-2">
               <Input type="file" accept="image/*" onChange={async (e) => {
                 const file = e.target.files?.[0];
@@ -157,7 +157,7 @@ export function EntityDialog({
               <div className="flex flex-wrap gap-2">
                 {form.sketches.map((s, i) => (
                   <div key={i} className="relative">
-                    <img src={s} alt="" className="h-16 w-16 rounded-md object-cover" />
+                    <img src={s} alt="" loading="lazy" decoding="async" className="h-16 w-16 rounded-md object-cover" />
                     <button aria-label="Remove sketch" className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-destructive text-destructive-foreground"
                       onClick={() => setForm({ ...form, sketches: form.sketches.filter((_, j) => j !== i) })}><X className="h-3 w-3" /></button>
                   </div>

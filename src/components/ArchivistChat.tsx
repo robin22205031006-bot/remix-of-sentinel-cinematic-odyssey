@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { scuCache } from '../services/scuCache';
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env["VITE_GEMINI_API_KEY"] });
 
 export function ArchivistChat() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([

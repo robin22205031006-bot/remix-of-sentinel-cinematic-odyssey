@@ -76,7 +76,7 @@ function SeriesFormDialog({
           <div className="grid gap-2">
             <label className="text-xs uppercase tracking-widest text-muted-foreground">Cover image</label>
             <div className="flex items-center gap-3">
-              {form.cover_image_url && <img src={form.cover_image_url} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              {form.cover_image_url && <img src={form.cover_image_url} alt="" loading="lazy" decoding="async" className="h-14 w-14 rounded-lg object-cover" />}
               <Input
                 type="file"
                 accept="image/*"
@@ -297,7 +297,7 @@ export function AdminSeries() {
               <div className="flex items-center gap-3">
                 <button onClick={() => setExpanded(expanded === s.id ? null : s.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                   {s.cover_image_url ? (
-                    <img src={s.cover_image_url} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+                    <img src={s.cover_image_url} alt="" loading="lazy" decoding="async" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
                   ) : (
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-background/60 text-muted-foreground"><BookMarked className="h-4 w-4" /></span>
                   )}

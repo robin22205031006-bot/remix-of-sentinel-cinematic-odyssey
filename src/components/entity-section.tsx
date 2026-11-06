@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent as ReactTouchEvent } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent as ReactTouchEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
@@ -37,15 +37,15 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function Avatar({ e, size }: { e: Entity; size: string }) {
+const Avatar = memo(function Avatar({ e, size }: { e: Entity; size: string }) {
   return e.image_url ? (
-    <img src={e.image_url} alt={e.name} className={`${size} shrink-0 rounded-xl object-cover`} />
+    <img src={e.image_url} alt={e.name} loading="lazy" decoding="async" className={`${size} shrink-0 rounded-xl object-cover`} />
   ) : (
     <div className={`${size} grid shrink-0 place-items-center rounded-xl bg-secondary font-display text-2xl text-muted-foreground`}>{e.name[0]}</div>
   );
-}
+});
 
-function CardBody({ e, showKind }: { e: Entity; showKind: boolean }) {
+const CardBody = memo(function CardBody({ e, showKind }: { e: Entity; showKind: boolean }) {
   return (
     <div className="min-w-0 flex-1 text-left">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -56,7 +56,7 @@ function CardBody({ e, showKind }: { e: Entity; showKind: boolean }) {
       <p className="truncate text-sm text-muted-foreground">{[e.alias, e.role].filter(Boolean).join(" · ") || "—"}</p>
     </div>
   );
-}
+});
 
 /** Opened state: the card shifts to the top-left corner, details open beside it. */
 function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from: DOMRect | null; onClose: () => void; isAdmin: boolean; onOpen: (target: Entity) => void }) {

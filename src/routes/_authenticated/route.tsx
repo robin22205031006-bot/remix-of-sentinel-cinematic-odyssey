@@ -1,13 +1,24 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
+const AUTH_TIMEOUT_MS = 3_000;
+
+function withTimeout<T>(p: PromiseLike<T>, ms: number): Promise<T | "__timeout__"> {
+  return Promise.race([p, new Promise<"__timeout__">((r) => setTimeout(() => r("__timeout__"), ms))]);
+}
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth", search: { next: location.pathname } });
-    const { data: banned } = await supabase.rpc("is_banned", { _uid: data.user.id });
-    if (banned) {
+    // Never hang navigation on a slow Supabase round-trip: on timeout we let the
+    // page render anyway — RLS still guards every query, and the session cache
+    // resolves the real user a moment later.
+    const auth = await withTimeout(supabase.auth.getUser(), AUTH_TIMEOUT_MS);
+    if (auth === "__timeout__") return;
+    const user = auth.data.user;
+    if (!user) throw redirect({ to: "/auth", search: { next: location.pathname } });
+    const ban = await withTimeout(supabase.rpc("is_banned", { _uid: user.id }), AUTH_TIMEOUT_MS);
+    if (ban !== "__timeout__" && ban.data) {
       await supabase.auth.signOut();
       throw redirect({ to: "/auth", search: { banned: "1" } });
     }

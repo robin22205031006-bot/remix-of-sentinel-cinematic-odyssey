@@ -84,7 +84,7 @@ export function UniversalSearch() {
                 ))}
               </CommandGroup>
               <CommandGroup heading="Lore notes">
-                {data.notes.slice(0, 800).map((n, i) => {
+                {data.notes.slice(0, 200).map((n, i) => {
                   const name = entityName.get(n.entity_id) ?? "Unknown";
                   const snippet = n.text.replace(/\s+/g, " ").slice(0, 90);
                   return (

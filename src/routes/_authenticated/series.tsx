@@ -64,7 +64,7 @@ function SeriesDetail({ seriesId, onClose }: { seriesId: string; onClose: () => 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               {series?.cover_image_url ? (
-                <img src={series.cover_image_url} alt={series.title} className="h-16 w-16 rounded-xl object-cover" />
+                <img src={series.cover_image_url} alt={series.title} loading="lazy" decoding="async" className="h-16 w-16 rounded-xl object-cover" />
               ) : (
                 <div className="grid h-16 w-16 place-items-center rounded-xl bg-secondary text-muted-foreground">
                   <BookMarked className="h-6 w-6" />
@@ -173,7 +173,7 @@ function SeriesPage() {
               className="glass group flex gap-4 rounded-2xl p-4 text-left transition-[transform,box-shadow,border-radius] duration-300 hover:-translate-y-0.5 hover:rounded-tr-[2rem] hover:glow-ring"
             >
               {s.cover_image_url ? (
-                <img src={s.cover_image_url} alt={s.title} className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+                <img src={s.cover_image_url} alt={s.title} loading="lazy" decoding="async" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
               ) : (
                 <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-secondary text-muted-foreground">
                   <BookMarked className="h-6 w-6" />

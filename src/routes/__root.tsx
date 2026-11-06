@@ -19,6 +19,7 @@ import { TypographyProvider } from "@/hooks/use-typography";
 import { supabase } from "@/integrations/supabase/client";
 import { syncSessionCache } from "@/lib/session-cache";
 import { useScuAudioGlobal } from "@/hooks/use-scu-audio";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -191,6 +192,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <AppearanceProvider>
         <TypographyProvider>
+        <ErrorBoundary>
         <div className="ambient-bg relative min-h-screen">
           <AmbientField />
           <ScrollProgress />
@@ -203,6 +205,7 @@ function RootComponent() {
           )}
           <Outlet />
         </div>
+        </ErrorBoundary>
         <Toaster />
         </TypographyProvider>
       </AppearanceProvider>

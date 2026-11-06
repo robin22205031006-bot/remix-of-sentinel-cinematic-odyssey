@@ -21,6 +21,7 @@ import { Route as AuthenticatedClansRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedFandomRouteImport } from './routes/_authenticated/fandom'
 import { Route as AuthenticatedGraphRouteImport } from './routes/_authenticated/graph'
 import { Route as AuthenticatedIngestRouteImport } from './routes/_authenticated/ingest'
+import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
 import { Route as AuthenticatedOrgsRouteImport } from './routes/_authenticated/orgs'
 import { Route as AuthenticatedReaderRouteImport } from './routes/_authenticated/reader'
 import { Route as AuthenticatedSeriesRouteImport } from './routes/_authenticated/series'
@@ -88,6 +89,11 @@ const AuthenticatedIngestRoute = AuthenticatedIngestRouteImport.update({
   path: '/ingest',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMapRoute = AuthenticatedMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOrgsRoute = AuthenticatedOrgsRouteImport.update({
   id: '/orgs',
   path: '/orgs',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/fandom': typeof AuthenticatedFandomRoute
   '/graph': typeof AuthenticatedGraphRoute
   '/ingest': typeof AuthenticatedIngestRoute
+  '/map': typeof AuthenticatedMapRoute
   '/orgs': typeof AuthenticatedOrgsRoute
   '/reader': typeof AuthenticatedReaderRoute
   '/series': typeof AuthenticatedSeriesRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/fandom': typeof AuthenticatedFandomRoute
   '/graph': typeof AuthenticatedGraphRoute
   '/ingest': typeof AuthenticatedIngestRoute
+  '/map': typeof AuthenticatedMapRoute
   '/orgs': typeof AuthenticatedOrgsRoute
   '/reader': typeof AuthenticatedReaderRoute
   '/series': typeof AuthenticatedSeriesRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/fandom': typeof AuthenticatedFandomRoute
   '/_authenticated/graph': typeof AuthenticatedGraphRoute
   '/_authenticated/ingest': typeof AuthenticatedIngestRoute
+  '/_authenticated/map': typeof AuthenticatedMapRoute
   '/_authenticated/orgs': typeof AuthenticatedOrgsRoute
   '/_authenticated/reader': typeof AuthenticatedReaderRoute
   '/_authenticated/series': typeof AuthenticatedSeriesRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/fandom'
     | '/graph'
     | '/ingest'
+    | '/map'
     | '/orgs'
     | '/reader'
     | '/series'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/fandom'
     | '/graph'
     | '/ingest'
+    | '/map'
     | '/orgs'
     | '/reader'
     | '/series'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fandom'
     | '/_authenticated/graph'
     | '/_authenticated/ingest'
+    | '/_authenticated/map'
     | '/_authenticated/orgs'
     | '/_authenticated/reader'
     | '/_authenticated/series'
@@ -334,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIngestRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/map': {
+      id: '/_authenticated/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof AuthenticatedMapRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orgs': {
       id: '/_authenticated/orgs'
       path: '/orgs'
@@ -387,6 +406,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFandomRoute: typeof AuthenticatedFandomRoute
   AuthenticatedGraphRoute: typeof AuthenticatedGraphRoute
   AuthenticatedIngestRoute: typeof AuthenticatedIngestRoute
+  AuthenticatedMapRoute: typeof AuthenticatedMapRoute
   AuthenticatedOrgsRoute: typeof AuthenticatedOrgsRoute
   AuthenticatedReaderRoute: typeof AuthenticatedReaderRoute
   AuthenticatedSeriesRoute: typeof AuthenticatedSeriesRoute
@@ -402,6 +422,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFandomRoute: AuthenticatedFandomRoute,
   AuthenticatedGraphRoute: AuthenticatedGraphRoute,
   AuthenticatedIngestRoute: AuthenticatedIngestRoute,
+  AuthenticatedMapRoute: AuthenticatedMapRoute,
   AuthenticatedOrgsRoute: AuthenticatedOrgsRoute,
   AuthenticatedReaderRoute: AuthenticatedReaderRoute,
   AuthenticatedSeriesRoute: AuthenticatedSeriesRoute,

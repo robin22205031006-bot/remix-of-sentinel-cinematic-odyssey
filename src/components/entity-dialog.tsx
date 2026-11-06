@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { sfx } from "@/lib/scu-audio";
-import { CHARACTER_STATUSES, GROUP_STATUSES, fileToDataUrl, type Entity } from "@/lib/entities";
+import { CHARACTER_STATUSES, GROUP_LINK_KINDS, GROUP_STATUSES, RELATIONSHIP_LABELS, RELATIONSHIP_TYPES, characterRelationshipsQuery, entitiesQuery, fileToDataUrl, type Entity } from "@/lib/entities";
 import { COMBAT_STATS, getCombatStats, splitStats, type CombatStats } from "@/lib/combat-stats";
 import { mergeLocks } from "@/lib/lore-merge";
 
@@ -50,7 +50,10 @@ export function EntityDialog({
     image_url: entity?.image_url ?? "",
     stats: entity ? Object.entries((entity.stats as Record<string, string>) ?? {}).map(([k, v]) => `${k}: ${v}`).join("\n") : "",
     sketches: entity?.sketches ?? [],
+    parent_id: entity?.parent_id ?? "",
   });
+  const [relTarget, setRelTarget] = useState("");
+  const [relType, setRelType] = useState<string>(RELATIONSHIP_TYPES[0]);
   const [sketchUrl, setSketchUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const isChar = kind === "character";
@@ -65,6 +68,36 @@ export function EntityDialog({
       return [...new Set((data ?? []).map((e) => e.category).filter((c): c is string => typeof c === "string" && c.trim().length > 0))].sort();
     },
   });
+  // Parent-organization candidates for group kinds, and character candidates for relationships.
+  const { data: parentCandidates } = useQuery({
+    ...entitiesQuery(GROUP_LINK_KINDS),
+    enabled: open && !isChar,
+  });
+  const { data: rels } = useQuery({ ...characterRelationshipsQuery(entity?.id ?? ""), enabled: open && isChar && !!entity });
+  const { data: charCandidates } = useQuery({
+    ...entitiesQuery(["character"]),
+    enabled: open && isChar && !!entity,
+  });
+
+  const addRelationship = async () => {
+    if (!entity || !relTarget || !relType) return;
+    const { error } = await supabase.from("character_relationships").insert({
+      character_id_1: entity.id,
+      character_id_2: relTarget,
+      relationship_type: relType,
+    });
+    if (error) { toast.error(error.message); return; }
+    sfx.add();
+    setRelTarget("");
+    qc.invalidateQueries({ queryKey: ["char-relationships"] });
+  };
+
+  const removeRelationship = async (id: string) => {
+    const { error } = await supabase.from("character_relationships").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else qc.invalidateQueries({ queryKey: ["char-relationships"] });
+  };
+
   const set = (k: "name" | "alias" | "role" | "description" | "stats") => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
 
   const save = async () => {
@@ -89,6 +122,7 @@ export function EntityDialog({
       image_url: form.image_url || null,
       stats,
       sketches: form.sketches,
+      parent_id: isChar ? null : form.parent_id || null,
     };
     let error;
     if (entity) {
@@ -141,6 +175,23 @@ export function EntityDialog({
               {(existingCategories ?? []).map((c) => <option key={c} value={c} />)}
             </datalist>
           </div>
+          {!isChar && (
+            <div className="grid gap-1.5">
+              <Label>Parent organization (branch / sub-faction)</Label>
+              <select
+                className="h-9 rounded-md border bg-background px-3 text-sm"
+                value={form.parent_id}
+                onChange={(e) => setForm({ ...form, parent_id: e.target.value })}
+              >
+                <option value="">— None (top level) —</option>
+                {(parentCandidates ?? [])
+                  .filter((c) => c.id !== entity?.id)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.kind})</option>
+                  ))}
+              </select>
+            </div>
+          )}
           <div className="grid gap-1.5"><Label>Description</Label><Textarea rows={5} value={form.description} onChange={set("description")} /></div>
           {isChar && (
             <div className="grid gap-3 rounded-xl border border-white/10 bg-secondary/30 p-4">
@@ -202,6 +253,38 @@ export function EntityDialog({
                   setForm((f) => ({ ...f, sketches: [...f.sketches, ...urls] }));
                 } catch { toast.error("This image could not be processed."); }
               }} />
+            </div>
+          )}
+          {isChar && entity && (
+            <div className="grid gap-2 rounded-xl border border-white/10 bg-secondary/30 p-4">
+              <Label>Relationships &amp; lineage</Label>
+              {(rels ?? []).length > 0 && (
+                <ul className="grid gap-1">
+                  {(rels ?? []).map((r) => {
+                    const otherId = r.character_id_1 === entity.id ? r.character_id_2 : r.character_id_1;
+                    const other = (charCandidates ?? []).find((c) => c.id === otherId);
+                    return (
+                      <li key={r.id} className="flex items-center gap-2 text-xs">
+                        <span className="flex-1 truncate">{other?.name ?? otherId.slice(0, 8)}</span>
+                        <span className="text-muted-foreground">{RELATIONSHIP_LABELS[r.relationship_type] ?? r.relationship_type}</span>
+                        <button aria-label="Remove relationship" className="text-muted-foreground hover:text-destructive" onClick={() => void removeRelationship(r.id)}><X className="h-3 w-3" /></button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <div className="flex gap-2">
+                <select className="h-9 flex-1 rounded-md border bg-background px-2 text-xs" value={relTarget} onChange={(e) => setRelTarget(e.target.value)} aria-label="Related character">
+                  <option value="">Link a character…</option>
+                  {(charCandidates ?? []).filter((c) => c.id !== entity.id && !(rels ?? []).some((r) => r.character_id_1 === c.id || r.character_id_2 === c.id)).map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <select className="h-9 rounded-md border bg-background px-2 text-xs" value={relType} onChange={(e) => setRelType(e.target.value)} aria-label="Relationship type">
+                  {RELATIONSHIP_TYPES.map((t) => <option key={t} value={t}>{RELATIONSHIP_LABELS[t]}</option>)}
+                </select>
+                <Button size="sm" variant="secondary" disabled={!relTarget} onClick={() => void addRelationship()}>Add</Button>
+              </div>
             </div>
           )}
           <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>

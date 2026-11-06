@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookMarked, Search, Users, X } from "lucide-react";
+import { BookMarked, FileText, Search, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { seriesQuery, seriesByIdQuery, seriesCharactersQuery, seriesMembersQuery, seriesStatusClass, type SeriesCharacter } from "@/lib/series";
+import { episodesQuery } from "@/lib/map";
 import { useSectionStyle } from "@/hooks/use-typography";
 import type { Entity } from "@/lib/entities";
 
@@ -121,6 +122,7 @@ function SeriesPage() {
   const navigate = Route.useNavigate();
   const [q, setQ] = useState("");
   const { data: series, isLoading } = useQuery(seriesQuery);
+  const { data: episodes } = useQuery(episodesQuery);
   const { data: allRows } = useQuery({
     queryKey: ["series-characters", "all"],
     enabled: !!series?.length,
@@ -190,6 +192,31 @@ function SeriesPage() {
             </button>
           ))}
         </div>
+      )}
+
+      {(episodes?.length ?? 0) > 0 && (
+        <section className="mt-14">
+          <p className="mb-1 text-[11px] uppercase tracking-[0.25em] text-accent">Chronicle</p>
+          <h2 className="mb-4 text-3xl font-medium">Published episodes</h2>
+          <div className="grid gap-3">
+            {(episodes ?? []).map((ep) => (
+              <details key={ep.id} className="glass group rounded-2xl p-4">
+                <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+                  <FileText className="h-5 w-5 shrink-0 text-accent" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-lg font-medium">{ep.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {[ep.series, new Date(ep.created_at).toLocaleDateString()].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                </summary>
+                <div className="mt-4 whitespace-pre-line border-t border-border/60 pt-4 text-sm leading-relaxed text-foreground/85">
+                  {ep.body}
+                </div>
+              </details>
+            ))}
+          </div>
+        </section>
       )}
 
       {s && <SeriesDetail seriesId={s} onClose={() => navigate({ search: {} })} />}

@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type To
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { BookOpen, GitCompareArrows, GitMerge, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { BookOpen, FileDown, GitCompareArrows, GitMerge, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useWebMCP } from "use-webmcp-tool";
 import {
@@ -24,6 +24,8 @@ import { MergeEntityDialog } from "./merge-entity-dialog";
 import { SketchGallery } from "./sketch-gallery";
 import { StatRadar } from "./stat-radar";
 import { CompareSentinel } from "./compare-sentinel";
+import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
+import { exportDossierPdf, type DossierGroup } from "@/lib/export-dossier";
 import { getCombatStats } from "@/lib/combat-stats";
 
 const statusClass: Record<string, string> = {
@@ -67,6 +69,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
   const combat = e.kind === "character" ? getCombatStats(e.stats) : null;
   const [comparing, setComparing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [style, setStyle] = useState<CSSProperties>({});
   useEffect(() => {
     const k = (ev: KeyboardEvent) => ev.key === "Escape" && onClose();
@@ -78,6 +81,38 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
     const target = { x: window.innerWidth < 640 ? 16 : 24, y: window.innerWidth < 640 ? 96 : 104 };
     setStyle({ "--from-x": `${from.left - target.x}px`, "--from-y": `${from.top - target.y}px`, "--from-s": "1" } as CSSProperties);
   }, [from]);
+
+  const exportPdf = async () => {
+    setExporting(true);
+    try {
+      let groups: DossierGroup[] = [];
+      try {
+        const { data: links } = await supabase
+          .from("entity_memberships")
+          .select("character_id, group_id, status")
+          .or(`character_id.eq.${e.id},group_id.eq.${e.id}`);
+        const ids = [...new Set((links ?? []).map((l) => (l.character_id === e.id ? l.group_id : l.character_id)))];
+        if (ids.length) {
+          const { data: ents } = await supabase.from("entities").select("id,name,kind,status").in("id", ids);
+          const byId = new Map((ents ?? []).map((x) => [x.id, x]));
+          const mapped: (DossierGroup | null)[] = (links ?? []).map((l) => {
+            const other = l.character_id === e.id ? l.group_id : l.character_id;
+            const g = byId.get(other);
+            return g ? { name: g.name, kind: g.kind, status: l.status ?? g.status } : null;
+          });
+          groups = mapped.filter((x): x is DossierGroup => x !== null);
+        }
+      } catch {
+        /* memberships table may not exist yet */
+      }
+      await exportDossierPdf(e, groups);
+      sfx.add();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "PDF export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const touch = useRef<{ x: number; y: number } | null>(null);
   const onTouchStart = (ev: ReactTouchEvent) => {
@@ -124,6 +159,15 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                   <GitCompareArrows className="h-4 w-4" />
                 </button>
               )}
+              <button
+                aria-label="Export official dossier PDF"
+                title="Export official dossier PDF"
+                disabled={exporting}
+                onClick={() => void exportPdf()}
+                className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
+              >
+                <FileDown className="h-4 w-4" />
+              </button>
               <Link
                 to="/reader"
                 search={{ e: e.id }}
@@ -152,6 +196,8 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             </dl>
           )}
           <EntityLinks entity={e} isAdmin={isAdmin} onOpen={onOpen} />
+          {e.kind === "character" && <CharacterRelationships entity={e} isAdmin={isAdmin} onOpen={onOpen} />}
+          {e.kind !== "character" && <OrgHierarchy entity={e} onOpen={onOpen} />}
           {e.kind === "character" && <SeriesAppearances entity={e} />}
           {e.kind === "character" && <CompareSentinel open={comparing} onOpenChange={setComparing} entity={e} />}
           {notes && notes.length > 0 && (

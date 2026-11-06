@@ -11,6 +11,7 @@ import { useIsAdmin, useIsStaff } from "@/hooks/use-admin";
 import { isSuperadminEmail } from "@/lib/roles";
 import { listUserRoles, setUserRole } from "@/lib/roles.functions";
 import { syncLoreExport } from "@/lib/ingest.functions";
+import { AdminEpisodes } from "@/components/admin-episodes";
 import { AdminSeries } from "@/components/admin-series";
 import { AdminTypography } from "@/components/admin-typography";
 
@@ -232,6 +233,7 @@ function Admin() {
 
       {isAdmin && <AdminSeries />}
       {isAdmin && <AdminTypography />}
+      {isAdmin && <AdminEpisodes />}
 
       <section className="glass rounded-2xl p-5">
         <h2 className="mb-3 text-2xl">Banned words</h2>

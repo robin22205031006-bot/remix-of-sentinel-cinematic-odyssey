@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useSectionStyle } from "@/hooks/use-typography";
-import { timelineQuery, type TimelineEvent } from "@/lib/entities";
+import { entitiesQuery, GROUP_LINK_KINDS, timelineQuery, type TimelineEvent } from "@/lib/entities";
 import { sfx } from "@/lib/scu-audio";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
@@ -47,13 +47,30 @@ function Timeline() {
   const sectionStyle = useSectionStyle("timeline");
   const qc = useQueryClient();
   const { data, isLoading } = useQuery(timelineQuery);
+  const { data: groups } = useQuery(entitiesQuery(GROUP_LINK_KINDS));
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<TimelineEvent | null>(null);
   const [series, setSeries] = useState("all");
+  const [era, setEra] = useState("all");
+  const [clan, setClan] = useState("all");
   const [f, setF] = useState<EventForm>(EMPTY_FORM);
 
   const allSeries = Array.from(new Set((data ?? []).map((e) => e.series).filter((s): s is string => !!s)));
-  const events = (data ?? []).filter((e) => series === "all" || e.series === series);
+  const allEras = Array.from(new Set((data ?? []).map((e) => e.era).filter((s): s is string => !!s)));
+  const clans = (groups ?? []).filter((g) => g.kind === "clan" || g.kind === "bloodline" || g.kind === "faction");
+  const selectedClan = clans.find((c) => c.id === clan);
+  const clanNeedles = selectedClan
+    ? [selectedClan.name, selectedClan.alias ?? ""].map((s) => s.toLowerCase()).filter(Boolean)
+    : [];
+  const events = (data ?? []).filter((e) => {
+    if (series !== "all" && e.series !== series) return false;
+    if (era !== "all" && e.era !== era) return false;
+    if (clanNeedles.length) {
+      const hay = [e.title, e.description, e.series, e.era, e.source].filter(Boolean).join(" ").toLowerCase();
+      if (!clanNeedles.some((n) => hay.includes(n))) return false;
+    }
+    return true;
+  });
   const chart = events.map((e, i) => ({
     i: i + 1,
     xlabel: e.era?.trim() || `Event ${i + 1}`,
@@ -203,13 +220,46 @@ function Timeline() {
         </div>
       )}
 
-      {allSeries.length > 0 && (
-        <div data-no-swipe className="mb-8 flex gap-1.5 overflow-x-auto">
-          {["all", ...allSeries].map((s) => (
-            <button key={s} onClick={() => setSeries(s)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${series === s ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}>
-              {s === "all" ? "All series" : s}
-            </button>
-          ))}
+      {(allSeries.length > 0 || allEras.length > 0 || clans.length > 0) && (
+        <div className="mb-8 space-y-2">
+          {(allSeries.length > 0 || allEras.length > 0) && (
+            <div data-no-swipe className="flex gap-1.5 overflow-x-auto">
+              {["all", ...allSeries].map((s) => (
+                <button key={s} onClick={() => setSeries(s)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${series === s ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}>
+                  {s === "all" ? "All series" : s}
+                </button>
+              ))}
+              {allEras.length > 0 && <span className="mx-1 w-px shrink-0 bg-border" />}
+              {["all", ...allEras].map((e2) => (
+                <button key={e2} onClick={() => setEra(e2)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${era === e2 ? "bg-accent/25 text-accent" : "text-muted-foreground"}`}>
+                  {e2 === "all" ? "All eras" : e2}
+                </button>
+              ))}
+            </div>
+          )}
+          {clans.length > 0 && (
+            <div data-no-swipe className="flex gap-1.5 overflow-x-auto">
+              <select
+                aria-label="Filter by clan or faction"
+                value={clan}
+                onChange={(e) => setClan(e.target.value)}
+                className="h-7 shrink-0 rounded-full border border-border bg-secondary px-3 text-xs text-foreground"
+              >
+                <option value="all">All clans &amp; factions</option>
+                {clans.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              {(series !== "all" || era !== "all" || clan !== "all") && (
+                <button
+                  onClick={() => { setSeries("all"); setEra("all"); setClan("all"); }}
+                  className="shrink-0 rounded-full px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

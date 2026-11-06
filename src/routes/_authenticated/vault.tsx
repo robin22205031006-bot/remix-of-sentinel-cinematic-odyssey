@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, FileText, Trash2, Upload } from "lucide-react";
+import { Database, Download, FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-admin";
+import { embedVaultTexts } from "@/lib/pdf-vault.functions";
+import { chunkText } from "@/lib/pdf-chunks";
+import { parsePdf } from "@/utils/pdfParser";
+import { sfx } from "@/lib/scu-audio";
+import type { Tables } from "@/integrations/supabase/types";
+
+type PdfVaultDoc = Tables<"pdf_vault">;
 
 export const Route = createFileRoute("/_authenticated/vault")({
   head: () => ({
@@ -23,6 +31,8 @@ export const Route = createFileRoute("/_authenticated/vault")({
   }),
   component: Vault,
 });
+
+const EMBED_BATCH = 20;
 
 function Vault() {
   const isAdmin = useIsAdmin();
@@ -41,6 +51,25 @@ function Vault() {
   const [downloadable, setDownloadable] = useState(true);
   const [busy, setBusy] = useState(false);
 
+  // ---- RAG vault state ----
+  const embed = useServerFn(embedVaultTexts);
+  const [ragFile, setRagFile] = useState<File | null>(null);
+  const [ragBusy, setRagBusy] = useState(false);
+  const [ragProgress, setRagProgress] = useState("");
+  const { data: ragDocs } = useQuery({
+    queryKey: ["pdf-vault"],
+    enabled: isAdmin,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pdf_vault").select("*").order("uploaded_at", { ascending: false });
+      if (error) {
+        if (/pdf_vault|schema cache|does not exist/i.test(error.message)) return [] as PdfVaultDoc[];
+        throw error;
+      }
+      return data ?? [];
+    },
+  });
+
   const upload = async () => {
     if (!file) return;
     setBusy(true);
@@ -57,6 +86,72 @@ function Vault() {
     qc.invalidateQueries({ queryKey: ["vault"] });
     qc.invalidateQueries({ queryKey: ["search-index"] });
     toast.success("Uploaded");
+  };
+
+  /** Extract -> chunk -> embed -> store, so the AI Box can cite this PDF. */
+  const indexForAi = async () => {
+    if (!ragFile || ragBusy) return;
+    setRagBusy(true);
+    try {
+      setRagProgress("Extracting text…");
+      const text = await parsePdf(ragFile);
+      const chunks = chunkText(text);
+      if (!chunks.length) throw new Error("No usable text chunks found in this PDF.");
+
+      const storagePath = `rag/${crypto.randomUUID()}-${ragFile.name.replace(/[^\w.-]/g, "_")}`;
+      const { data: auth } = await supabase.auth.getUser();
+      const { data: doc, error: docErr } = await supabase
+        .from("pdf_vault")
+        .insert({
+          file_name: ragFile.name,
+          storage_path: storagePath,
+          uploaded_by: auth.user?.id ?? null,
+          status: "processing",
+          chunk_count: 0,
+        })
+        .select("id")
+        .single();
+      if (docErr || !doc) throw new Error(docErr?.message ?? "Could not register the document.");
+
+      // Best-effort file archival into the existing vault bucket.
+      const up = await supabase.storage.from("vault").upload(storagePath, ragFile, { contentType: "application/pdf" });
+      if (up.error) console.warn("[pdf-vault] storage upload failed:", up.error.message);
+
+      for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
+        const batch = chunks.slice(i, i + EMBED_BATCH);
+        setRagProgress(`Embedding chunks ${i + 1}–${Math.min(i + EMBED_BATCH, chunks.length)} of ${chunks.length}…`);
+        const { embeddings } = await embed({ data: { texts: batch } });
+        const rows = batch.map((content_text, j) => ({
+          pdf_id: doc.id,
+          chunk_index: i + j,
+          content_text,
+          embedding: `[${(embeddings[j] ?? []).join(",")}]`,
+        }));
+        const { error: chunkErr } = await supabase.from("pdf_chunks").insert(rows);
+        if (chunkErr) throw new Error(`Chunk insert failed: ${chunkErr.message}`);
+      }
+
+      await supabase.from("pdf_vault").update({ status: "ready", chunk_count: chunks.length }).eq("id", doc.id);
+      sfx.add();
+      toast.success(`Indexed ${ragFile.name} — ${chunks.length} chunks ready for the AI Box.`);
+      setRagFile(null);
+      qc.invalidateQueries({ queryKey: ["pdf-vault"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Indexing failed");
+    } finally {
+      setRagBusy(false);
+      setRagProgress("");
+    }
+  };
+
+  const deleteRagDoc = async (d: PdfVaultDoc) => {
+    await supabase.storage.from("vault").remove([d.storage_path]);
+    const { error } = await supabase.from("pdf_vault").delete().eq("id", d.id);
+    if (error) toast.error(error.message);
+    else {
+      sfx.remove();
+      qc.invalidateQueries({ queryKey: ["pdf-vault"] });
+    }
   };
 
   const open = async (path: string) => {
@@ -94,6 +189,49 @@ function Vault() {
             <Label className="flex items-center gap-2"><Switch checked={downloadable} onCheckedChange={setDownloadable} />Downloadable</Label>
             <Button className="ml-auto" size="sm" disabled={!file || busy} onClick={upload}><Upload className="h-4 w-4" />{busy ? "Uploading…" : "Upload"}</Button>
           </div>
+        </section>
+      )}
+
+      {isAdmin && (
+        <section className="glass mb-8 rounded-2xl border border-accent/20 p-5">
+          <div className="mb-1 flex items-center gap-2">
+            <Database className="h-4 w-4 text-accent" />
+            <h2 className="text-lg font-medium">AI knowledge index</h2>
+          </div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Index a PDF for the AI Box: text is extracted, chunked, embedded, and cited as an official SCU source.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              type="file"
+              accept="application/pdf"
+              className="max-w-xs"
+              disabled={ragBusy}
+              onChange={(e) => setRagFile(e.target.files?.[0] ?? null)}
+            />
+            <Button size="sm" disabled={!ragFile || ragBusy} onClick={() => void indexForAi()}>
+              {ragBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+              {ragBusy ? "Indexing…" : "Index for AI"}
+            </Button>
+          </div>
+          {ragProgress && <p className="mt-2 text-xs text-muted-foreground">{ragProgress}</p>}
+
+          {(ragDocs?.length ?? 0) > 0 && (
+            <ul className="mt-4 grid gap-2">
+              {ragDocs!.map((d) => (
+                <li key={d.id} className="flex items-center gap-3 rounded-lg bg-secondary/40 px-3 py-2 text-sm">
+                  <FileText className="h-4 w-4 shrink-0 text-accent" />
+                  <span className="min-w-0 flex-1 truncate">{d.file_name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {d.status === "ready" ? `${d.chunk_count} chunks` : d.status}
+                  </span>
+                  <Button size="icon" variant="ghost" aria-label="Delete index" onClick={() => void deleteRagDoc(d)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 

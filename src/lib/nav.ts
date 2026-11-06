@@ -5,6 +5,7 @@ export const TABS = [
   { to: "/characters", label: "Characters", icon: "chars" },
   { to: "/series", label: "Series", icon: "series" },
   { to: "/timeline", label: "Timeline", icon: "time" },
+  { to: "/map", label: "Map", icon: "map" },
   { to: "/graph", label: "Graph", icon: "graph" },
   { to: "/fandom", label: "Fandom", icon: "fandom" },
   { to: "/ai", label: "AI Box", icon: "ai" },

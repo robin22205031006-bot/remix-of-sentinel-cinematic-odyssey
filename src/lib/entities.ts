@@ -7,6 +7,33 @@ export type LoreNote = Tables<"lore_notes">;
 export type TimelineEvent = Tables<"timeline_events">;
 export type EntityMembership = Tables<"entity_memberships">;
 export type EntityRelation = Tables<"entity_relations">;
+export type CharacterRelationship = Tables<"character_relationships">;
+
+/** Typed kinship/social bonds between two characters. */
+export const RELATIONSHIP_TYPES = [
+  "father_son", "mother_daughter", "parent_child",
+  "brother_sister", "brother_brother", "sister_sister", "siblings",
+  "lovers", "spouses", "best_friends", "rivals",
+  "mentor_student", "ally", "enemy",
+] as const;
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
+export const RELATIONSHIP_LABELS: Record<string, string> = {
+  father_son: "Father / Son",
+  mother_daughter: "Mother / Daughter",
+  parent_child: "Parent / Child",
+  brother_sister: "Brother / Sister",
+  brother_brother: "Brother / Brother",
+  sister_sister: "Sister / Sister",
+  siblings: "Siblings",
+  lovers: "Lovers",
+  spouses: "Spouses",
+  best_friends: "Best Friends",
+  rivals: "Rivals",
+  mentor_student: "Mentor / Student",
+  ally: "Allies",
+  enemy: "Enemies",
+};
 
 /** Directed relation kinds used by the clan/lineage graph. */
 export const REL_TYPES = ["commands", "ally", "rival", "mentor", "kin"] as const;
@@ -93,6 +120,41 @@ export const entityRelationsQuery = queryOptions({
     return data;
   },
 });
+
+/** All typed relationships touching an entity (either side). */
+export const characterRelationshipsQuery = (entityId: string) =>
+  queryOptions({
+    queryKey: ["char-relationships", entityId],
+    enabled: !!entityId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("character_relationships")
+        .select("*")
+        .or(`character_id_1.eq.${entityId},character_id_2.eq.${entityId}`);
+      if (error) {
+        if (/character_relationships|schema cache|does not exist/i.test(error.message)) return [] as CharacterRelationship[];
+        throw error;
+      }
+      return data;
+    },
+  });
+
+/** Branch entities whose parent_id points at this entity. */
+export const childEntitiesQuery = (parentId: string) =>
+  queryOptions({
+    queryKey: ["entity-children", parentId],
+    enabled: !!parentId,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("entities").select("*").eq("parent_id", parentId).order("name");
+      if (error) {
+        if (/parent_id|schema cache|does not exist/i.test(error.message)) return [] as Entity[];
+        throw error;
+      }
+      return data;
+    },
+  });
 
 export const notesQuery = (entityId: string) =>
   queryOptions({

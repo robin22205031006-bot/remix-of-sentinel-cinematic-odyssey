@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { sfx } from "@/lib/scu-audio";
 import { CHARACTER_STATUSES, GROUP_STATUSES, fileToDataUrl, type Entity } from "@/lib/entities";
+import { COMBAT_STATS, getCombatStats, splitStats, type CombatStats } from "@/lib/combat-stats";
 import { mergeLocks } from "@/lib/lore-merge";
 
 type Kind = Entity["kind"];
@@ -53,6 +54,7 @@ export function EntityDialog({
   const [sketchUrl, setSketchUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const isChar = kind === "character";
+  const [combat, setCombat] = useState<CombatStats>(() => getCombatStats(entity?.stats) ?? { power: 0, agility: 0, tactical_iq: 0, clan_mastery: 0, weapon_proficiency: 0 });
 
   // Existing sectors for this entity type — admins can also type a custom one.
   const kindsKey = [...allowedKinds].sort().join(",");
@@ -68,9 +70,14 @@ export function EntityDialog({
   const save = async () => {
     if (!form.name.trim()) { toast.error("Name is required"); return; }
     setSaving(true);
-    const stats = Object.fromEntries(
+    const parsed = Object.fromEntries(
       form.stats.split("\n").map((l) => l.split(":")).filter((p) => p.length >= 2 && (p[0] ?? "").trim()).map(([k, ...v]) => [(k ?? "").trim(), v.join(":").trim()]),
     );
+    const { custom } = splitStats(parsed);
+    // Canonical combat stats come from the sliders; the textarea keeps custom keys only.
+    const stats = isChar
+      ? { ...custom, ...Object.fromEntries(COMBAT_STATS.filter(({ key }) => combat[key] > 0).map(({ key }) => [key, combat[key]])) }
+      : parsed;
     const row = {
       kind,
       name: form.name.trim(),
@@ -135,7 +142,27 @@ export function EntityDialog({
             </datalist>
           </div>
           <div className="grid gap-1.5"><Label>Description</Label><Textarea rows={5} value={form.description} onChange={set("description")} /></div>
-          <div className="grid gap-1.5"><Label>Stats (one per line, e.g. "Power: 9")</Label><Textarea rows={3} value={form.stats} onChange={set("stats")} /></div>
+          {isChar && (
+            <div className="grid gap-3 rounded-xl border border-white/10 bg-secondary/30 p-4">
+              <Label>Combat stats</Label>
+              {COMBAT_STATS.map(({ key, label }) => (
+                <div key={key} className="grid grid-cols-[8.5rem_1fr_2.5rem] items-center gap-3">
+                  <span className="text-xs text-muted-foreground">{label}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={combat[key]}
+                    onChange={(e) => setCombat({ ...combat, [key]: Number(e.target.value) })}
+                    className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-rose-500"
+                    aria-label={label}
+                  />
+                  <span className="text-right font-mono text-xs text-foreground">{combat[key]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="grid gap-1.5"><Label>{isChar ? "Additional stats (one per line, e.g. \"Rank: Warden\")" : "Stats (one per line, e.g. \"Power: 9\")"}</Label><Textarea rows={3} value={form.stats} onChange={set("stats")} /></div>
           <div className="grid gap-1.5">
             <Label>{isChar ? "Avatar" : "Emblem"}</Label>
             {form.image_url && <img src={form.image_url} alt="" loading="lazy" decoding="async" className="h-20 w-20 rounded-md object-cover" />}

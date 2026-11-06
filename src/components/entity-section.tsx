@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type To
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { BookOpen, GitMerge, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { BookOpen, GitCompareArrows, GitMerge, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useWebMCP } from "use-webmcp-tool";
 import {
@@ -22,6 +22,9 @@ import { EntityLinks } from "./entity-links";
 import { SeriesAppearances } from "./series-appearances";
 import { MergeEntityDialog } from "./merge-entity-dialog";
 import { SketchGallery } from "./sketch-gallery";
+import { StatRadar } from "./stat-radar";
+import { CompareSentinel } from "./compare-sentinel";
+import { getCombatStats } from "@/lib/combat-stats";
 
 const statusClass: Record<string, string> = {
   Alive: "text-status-alive", Active: "text-status-alive",
@@ -62,6 +65,8 @@ const CardBody = memo(function CardBody({ e, showKind }: { e: Entity; showKind: 
 function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from: DOMRect | null; onClose: () => void; isAdmin: boolean; onOpen: (target: Entity) => void }) {
   const { data: notes } = useQuery(notesQuery(e.id));
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
+  const combat = e.kind === "character" ? getCombatStats(e.stats) : null;
+  const [comparing, setComparing] = useState(false);
   const [style, setStyle] = useState<CSSProperties>({});
   useEffect(() => {
     const k = (ev: KeyboardEvent) => ev.key === "Escape" && onClose();
@@ -109,6 +114,16 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           <div className="flex items-start justify-between">
             <h3 className="text-4xl font-medium glow-text">{e.name}</h3>
             <div className="flex items-center gap-1">
+              {e.kind === "character" && (
+                <button
+                  aria-label="Compare sentinel"
+                  title="Compare combat stats"
+                  onClick={() => setComparing(true)}
+                  className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-muted-foreground hover:text-foreground"
+                >
+                  <GitCompareArrows className="h-4 w-4" />
+                </button>
+              )}
               <Link
                 to="/reader"
                 search={{ e: e.id }}
@@ -123,6 +138,12 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           </div>
           <SketchGallery images={e.sketches} name={e.name} />
           {e.description && <p className="whitespace-pre-line text-foreground/85">{e.description}</p>}
+          {combat && (
+            <div className="rounded-xl border border-white/10 bg-secondary/20 p-4">
+              <h4 className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Combat metrics</h4>
+              <StatRadar a={combat} nameA={e.name} size={230} />
+            </div>
+          )}
           {stats.length > 0 && (
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
               {stats.map(([k, v]) => (
@@ -132,6 +153,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           )}
           <EntityLinks entity={e} isAdmin={isAdmin} onOpen={onOpen} />
           {e.kind === "character" && <SeriesAppearances entity={e} />}
+          {e.kind === "character" && <CompareSentinel open={comparing} onOpenChange={setComparing} entity={e} />}
           {notes && notes.length > 0 && (
             <div className="grid gap-3">
               <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Lore notes</h4>

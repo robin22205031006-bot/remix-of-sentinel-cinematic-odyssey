@@ -139,7 +139,9 @@ export type Database = {
       }
       entities: {
         Row: {
+          abilities: string[]
           alias: string | null
+          beast_traits: string[]
           category: string | null
           created_at: string
           description: string
@@ -156,7 +158,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          abilities?: string[]
           alias?: string | null
+          beast_traits?: string[]
           category?: string | null
           created_at?: string
           description?: string
@@ -173,7 +177,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          abilities?: string[]
           alias?: string | null
+          beast_traits?: string[]
           category?: string | null
           created_at?: string
           description?: string

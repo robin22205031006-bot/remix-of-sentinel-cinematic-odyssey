@@ -28,7 +28,7 @@ export const getInstallGuide = createServerFn({ method: "POST" })
           `It supports "Add to Home Screen"/"Install app" from the browser (it has a web app manifest and icons), ` +
           `and an Android package can be made with PWABuilder (pwabuilder.com → enter the URL → Package for stores → Android). ` +
           `There is no App Store or Play Store listing yet. Give short, numbered, device-specific steps in plain language, ` +
-          `then one line of troubleshooting tips. No more than 10 steps. Never invent features.`,
+          `then one line of troubleshooting tips. No more than 10 steps. Plain text only, no markdown symbols like ** or #. Never invent features.`,
         input: `Device: ${data.device}\nBrowser: ${data.browser || "unknown"}\nWhat they want: ${data.goal || "install on home screen"}\nExtra notes: ${data.notes || "none"}`,
         max_output_tokens: 900,
       });

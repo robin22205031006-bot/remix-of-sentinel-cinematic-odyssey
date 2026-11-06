@@ -10,13 +10,32 @@ const { count, size, warnings } = await generateSW({
   ],
   globIgnores: ["sw.js", "registerSW.js", "_headers", "**/*.map"],
   swDest: ".output/public/sw.js",
-  navigateFallback: "/offline.html",
-  navigateFallbackDenylist: [/^\/api\//, /\/auth\//],
+  // No navigateFallback: this is an SSR app with no SPA shell HTML to fall back
+  // to — serving offline.html for every navigation traps users on the offline
+  // page after any full reload (e.g. post-login). Navigations are handled by
+  // the NetworkFirst rule below instead.
   skipWaiting: true,
   clientsClaim: true,
   cleanupOutdatedCaches: true,
   navigationPreload: true,
   runtimeCaching: [
+    {
+      // Page navigations: always try the network first; only when it fails or
+      // stalls do we serve the precached offline page. /api/ and /auth/ are
+      // excluded so auth redirects and server functions are never cached.
+      urlPattern: ({ url, request }) =>
+        request.mode === "navigate" &&
+        !url.pathname.startsWith("/api/") &&
+        !url.pathname.startsWith("/auth"),
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "scu-navigation",
+        networkTimeoutSeconds: 4,
+        precacheFallback: { fallbackURL: "/offline.html" },
+        expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 },
+        cacheableResponse: { statuses: [200] },
+      },
+    },
     {
       urlPattern: /^https:\/\/.*\.(lovable\.cloud|supabase\.co)\//,
       handler: "NetworkFirst",

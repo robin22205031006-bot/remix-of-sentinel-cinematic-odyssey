@@ -2,7 +2,14 @@ import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { scuCache } from '../services/scuCache';
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env["VITE_GEMINI_API_KEY"] });
+// Lazy-init: constructing GoogleGenAI at module scope throws during import if
+// VITE_GEMINI_API_KEY is absent at build time, which white-screens any route
+// that pulls this module in.
+let ai: GoogleGenAI | null = null;
+function getAi(): GoogleGenAI {
+  if (!ai) ai = new GoogleGenAI({ apiKey: import.meta.env["VITE_GEMINI_API_KEY"] });
+  return ai;
+}
 
 export function ArchivistChat() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
@@ -32,7 +39,7 @@ export function ArchivistChat() {
         Timeline: ${JSON.stringify(timeline)}
       `;
 
-      const response = await ai.models.generateContent({
+      const response = await getAi().models.generateContent({
         model: 'gemini-2.0-flash',
         contents: `${context}\n\nUser Query: ${userMessage}`,
       });

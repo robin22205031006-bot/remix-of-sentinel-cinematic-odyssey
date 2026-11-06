@@ -183,8 +183,8 @@
 }
 
 @keyframes scu-morph-in {
-  from { opacity: 0; transform: scale(0.96); filter: blur(6px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
 }
 @utility morph-in {
   animation: scu-morph-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -201,4 +201,75 @@
 
 @layer base {
   body { transition: background-color 0.4s ease; }
+}
+
+/* ---- Ambient field: GPU-only transform/opacity animation ---- */
+.scu-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  will-change: transform;
+}
+.scu-orb-a {
+  width: 42rem; height: 42rem; top: -18rem; left: -12rem;
+  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 16%, transparent), transparent 65%);
+  animation: scu-orb-a 46s ease-in-out infinite alternate;
+}
+.scu-orb-b {
+  width: 38rem; height: 38rem; top: 30%; right: -16rem;
+  background: radial-gradient(circle, color-mix(in oklab, var(--glow, var(--accent)) 14%, transparent), transparent 65%);
+  animation: scu-orb-b 58s ease-in-out infinite alternate;
+}
+.scu-orb-c {
+  width: 30rem; height: 30rem; bottom: -14rem; left: 30%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--status-dead) 10%, transparent), transparent 65%);
+  animation: scu-orb-a 64s ease-in-out infinite alternate-reverse;
+}
+.scu-ember {
+  position: absolute;
+  bottom: -4px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, var(--accent), transparent 70%);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: scu-ember-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes scu-orb-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(6rem, 4rem, 0) scale(1.12); }
+}
+@keyframes scu-orb-b {
+  from { transform: translate3d(0, 0, 0) scale(1.05); }
+  to { transform: translate3d(-5rem, -6rem, 0) scale(0.95); }
+}
+@keyframes scu-ember-rise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  8% { opacity: var(--ember-o, 0.4); }
+  85% { opacity: var(--ember-o, 0.4); }
+  100% { transform: translate3d(var(--ember-x, 0px), -105vh, 0); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scu-orb, .scu-ember { animation: none; }
+  .scu-ember { display: none; }
+}
+
+/* Mobile/tablet: keep the mood but drop the expensive particles + heavy blur
+   so 60fps scrolling stays locked on mid-range Android devices. */
+@media (max-width: 860px), (hover: none) and (pointer: coarse) {
+  .scu-ember { display: none; }
+  .scu-orb { filter: blur(56px); }
+}
+
+/* Admin typography engine: zoom + admin base-scale compose on <html>. */
+html {
+  font-size: calc(16px * var(--scu-zoom, 1) * var(--scu-base-scale, 1));
+}
+
+/* Admin heading weight (unlayered rules beat Tailwind's layered font-* utilities). */
+h1, h2, h3, h4 {
+  font-weight: var(--scu-heading-weight, 500);
 }

@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useIsStaff } from "@/hooks/use-admin";
+import { isSuperadminEmail } from "@/lib/roles";
+import { listUserRoles, setUserRole } from "@/lib/roles.functions";
+import { syncLoreExport } from "@/lib/ingest.functions";
+import { AdminSeries } from "@/components/admin-series";
+import { AdminTypography } from "@/components/admin-typography";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -27,6 +33,12 @@ function Admin() {
   const isAdmin = useIsAdmin();
   const qc = useQueryClient();
   const [word, setWord] = useState("");
+  const [assignTarget, setAssignTarget] = useState("");
+  const [newRole, setNewRole] = useState("moderator");
+  const [syncing, setSyncing] = useState(false);
+  const listRoles = useServerFn(listUserRoles);
+  const assignRole = useServerFn(setUserRole);
+  const runSync = useServerFn(syncLoreExport);
 
   const { data } = useQuery({
     queryKey: ["admin"],
@@ -42,11 +54,89 @@ function Admin() {
     },
   });
 
+  const { data: roleRows } = useQuery({
+    queryKey: ["admin-roles"],
+    enabled: staff && isAdmin,
+    queryFn: () => listRoles({ data: {} }),
+  });
+
+  const { data: conflicts } = useQuery({
+    queryKey: ["admin-conflicts"],
+    enabled: staff,
+    queryFn: async () => {
+      const [notes, ents] = await Promise.all([
+        supabase.from("lore_notes").select("id, entity_id, text, source, created_at").ilike("text", "[conflict]%").order("created_at", { ascending: false }).limit(200),
+        supabase.from("entities").select("id, name"),
+      ]);
+      const nameOf = new Map((ents.data ?? []).map((e) => [e.id, e.name]));
+      return (notes.data ?? []).map((n) => ({ ...n, entity_name: nameOf.get(n.entity_id) ?? "—" }));
+    },
+  });
+
   if (!staff) return <main className="mx-auto max-w-3xl px-5 pt-32 text-muted-foreground">Staff only.</main>;
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin"] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin"] });
+    qc.invalidateQueries({ queryKey: ["admin-roles"] });
+    qc.invalidateQueries({ queryKey: ["roles"] });
+  };
+
+  const syncExport = async () => {
+    setSyncing(true);
+    try {
+      const [entities, updates, events] = await Promise.all(
+        ["entities.json", "updates.json", "timeline_events.json"].map(async (f) => {
+          const res = await fetch(`/lore-export/${f}`);
+          if (!res.ok) throw new Error(`${f} not found — run lore-consolidate.mjs first.`);
+          return res.json();
+        }),
+      );
+      const result = await runSync({ data: { entities, updates, events } });
+      toast.success(`Lore sync complete: ${result.created} created, ${result.notes} notes, ${result.updated} updated, ${result.events} events.`);
+      qc.invalidateQueries({ queryKey: ["entities"] });
+      qc.invalidateQueries({ queryKey: ["timeline"] });
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      qc.invalidateQueries({ queryKey: ["admin-conflicts"] });
+    } catch (err) {
+      console.error("SYNC ERROR DETAILS:", err);
+      toast.error(err instanceof Error ? err.message : "The lore sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  };
   const banned = new Set((data?.bans ?? []).map((b) => b.user_id));
   const emailOf = (id: string | null) => data?.profiles.find((p) => p.id === id)?.email ?? "—";
+
+  const rolesOf = (userId: string) => (roleRows ?? []).filter((r) => r.user_id === userId).map((r) => r.role as string);
+  const effectiveRole = (userId: string) => {
+    const roles = rolesOf(userId);
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("moderator")) return "moderator";
+    return "user";
+  };
+
+  const changeRole = async (target: { email?: string; userId?: string }, role: string, label?: string) => {
+    try {
+      const res = await assignRole({
+        data: { ...target, role: role === "user" ? null : (role as "admin" | "moderator") },
+      });
+      toast.success(`Role updated${res?.email ? ` for ${res.email}` : label ? ` for ${label}` : ""}`);
+      refresh();
+      return true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "The role could not be updated.");
+      return false;
+    }
+  };
+
+  const assignByEmailOrId = () => {
+    const value = assignTarget.trim();
+    if (!value) return;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    void changeRole(isUuid ? { userId: value } : { email: value }, newRole, value).then((ok) => {
+      if (ok) setAssignTarget("");
+    });
+  };
 
   const toggleBan = async (id: string) => {
     const { data: me } = await supabase.auth.getUser();
@@ -72,22 +162,76 @@ function Admin() {
           <p className="text-[11px] uppercase tracking-[0.25em] text-accent">Control room</p>
           <h1 className="mt-2 text-5xl font-medium glow-text">Admin</h1>
         </div>
-        {isAdmin && <Button asChild size="sm" variant="secondary"><Link to="/ingest">Ingest a PDF</Link></Button>}
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Button asChild size="sm" variant="secondary"><Link to="/ingest">Ingest a PDF</Link></Button>
+            <Button size="sm" variant="secondary" disabled={syncing} onClick={() => void syncExport()}>
+              {syncing ? "Syncing…" : "Sync lore export"}
+            </Button>
+          </div>
+        )}
       </header>
 
       <section className="glass rounded-2xl p-5">
-        <h2 className="mb-3 text-2xl">Members</h2>
+        <h2 className="mb-1 text-2xl">Members</h2>
+        {isAdmin && (
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+            <Input
+              placeholder="Member email or user ID"
+              value={assignTarget}
+              onChange={(e) => setAssignTarget(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && assignByEmailOrId()}
+            />
+            <select
+              aria-label="Role to assign"
+              className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground"
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+            >
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+              <option value="admin">Admin</option>
+            </select>
+            <Button onClick={assignByEmailOrId}>Assign role</Button>
+          </div>
+        )}
         <ul className="grid gap-2">
-          {(data?.profiles ?? []).map((p) => (
-            <li key={p.id} className="flex items-center gap-3 text-sm">
-              <span className="min-w-0 flex-1 truncate">{p.display_name || p.email}</span>
-              <Button size="sm" variant={banned.has(p.id) ? "secondary" : "destructive"} onClick={() => toggleBan(p.id)}>
-                {banned.has(p.id) ? "Unblock" : "Block"}
-              </Button>
-            </li>
-          ))}
+          {(data?.profiles ?? []).map((p) => {
+            const superadmin = isSuperadminEmail(p.email);
+            return (
+              <li key={p.id} className="flex items-center gap-3 text-sm">
+                <span className="min-w-0 flex-1 truncate">
+                  {p.display_name || p.email}
+                  <span className="ml-2 font-mono text-[10px] text-muted-foreground">{p.id}</span>
+                  {superadmin && <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-accent">Superadmin</span>}
+                </span>
+                {isAdmin && p.email && (
+                  superadmin ? (
+                    <span className="rounded-full bg-secondary px-3 py-1 text-xs">Admin</span>
+                  ) : (
+                    <select
+                      aria-label={`Role for ${p.email}`}
+                      className="rounded-full border border-border bg-secondary px-3 py-1 text-xs text-foreground"
+                      value={effectiveRole(p.id)}
+                      onChange={(e) => void changeRole({ email: p.email as string }, e.target.value)}
+                    >
+                      <option value="user">User</option>
+                      <option value="moderator">Moderator</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  )
+                )}
+                <Button size="sm" variant={banned.has(p.id) ? "secondary" : "destructive"} onClick={() => toggleBan(p.id)}>
+                  {banned.has(p.id) ? "Unblock" : "Block"}
+                </Button>
+              </li>
+            );
+          })}
         </ul>
       </section>
+
+      {isAdmin && <AdminSeries />}
+      {isAdmin && <AdminTypography />}
 
       <section className="glass rounded-2xl p-5">
         <h2 className="mb-3 text-2xl">Banned words</h2>
@@ -104,6 +248,26 @@ function Admin() {
           ))}
         </div>
       </section>
+
+      {(conflicts ?? []).length > 0 && (
+        <section className="glass rounded-2xl p-5">
+          <h2 className="mb-1 text-2xl">Lore conflicts</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Extraction disagreements preserved as notes — review and resolve them on each entity.
+          </p>
+          <ul className="grid gap-2 text-sm">
+            {(conflicts ?? []).map((c) => (
+              <li key={c.id} className="rounded-lg bg-secondary/50 px-3 py-2">
+                <span className="font-medium">{c.entity_name}</span>
+                <span className="text-muted-foreground"> — {c.text}</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {c.source ?? ""} · {new Date(c.created_at).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="glass rounded-2xl p-5">
         <h2 className="mb-3 text-2xl">Recent activity</h2>

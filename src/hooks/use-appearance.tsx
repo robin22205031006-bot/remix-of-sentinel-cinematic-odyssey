@@ -38,7 +38,8 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     for (const [k, v] of Object.entries(themeVars(t, dark))) root.style.setProperty(k, v);
     root.classList.toggle("dark", dark);
     root.dataset["minimal"] = t.minimal ? "true" : "false";
-    root.style.fontSize = `${(FONT_SCALES[scaleIndex] ?? 1) * 100}%`;
+    // Zoom is expressed as a CSS var so the admin typography base-scale can compose with it.
+    root.style.setProperty("--scu-zoom", String(FONT_SCALES[scaleIndex] ?? 1));
     try {
       localStorage.setItem("scu-theme-id", t.id);
       localStorage.setItem("scu-theme", dark ? "dark" : "light");

@@ -4,6 +4,7 @@ import { filterGrounded } from "./lore-merge";
 const entityFields = {
   name: { type: "string" }, alias: { type: ["string", "null"] },
   role: { type: ["string", "null"] }, status: { type: ["string", "null"] },
+  category: { type: ["string", "null"] },
   description: { type: "string" }, quote: { type: "string" },
 };
 const entitySchema = (kinds: string[]) => ({
@@ -35,7 +36,7 @@ export const loreJsonSchema = {
 
 const fields = {
   name: z.string().min(1), alias: z.string().nullable(), role: z.string().nullable(),
-  status: z.string().nullable(), description: z.string(), quote: z.string(),
+  status: z.string().nullable(), category: z.string().nullable(), description: z.string(), quote: z.string(),
 };
 const extraction = z.object({
   characters: z.array(z.object({ kind: z.literal("character"), ...fields }).strict()),
@@ -57,5 +58,7 @@ export const loreExtractionPrompt =
   "Only create a group when it is explicitly named as an organization, clan, bloodline, or faction. " +
   "For names already in the archive, use updates with the exact existing_name, not characters or organizations. " +
   "Character status: Alive, Dead, Retired, Missing, Legend; group status: Active or Inactive; null if unstated. " +
+  "Character category (moral alignment/role): Protagonist, Antagonist, Anti-Hero, Anti-Villain, or Support; null if unstated. " +
+  "Group category: Faction, Black Ops Team, Clan, Organization, Cult, or Bloodline; null if unstated. " +
   "Every item requires an exact verbatim quote of 10-200 characters supporting its facts. " +
   "Descriptions must be concise and supported by the quote. Return empty arrays for categories with no evidence.";

@@ -1,0 +1,70 @@
+[
+  {
+    "file": "Canons duskmoor origin.pdf",
+    "entities": 0,
+    "updates": 5,
+    "events": 2
+  },
+  {
+    "file": "Arashi and hus story.pdf",
+    "error": "Empty Gemini response"
+  },
+  {
+    "file": "Arashi and kurohana story.pdf",
+    "error": "Empty Gemini response"
+  },
+  {
+    "file": "corvani and orion things.pdf",
+    "entities": 0,
+    "updates": 7,
+    "events": 2
+  },
+  {
+    "file": "infos.pdf",
+    "entities": 4,
+    "updates": 0,
+    "events": 0
+  },
+  {
+    "file": "ravenblade things.pdf",
+    "error": "{\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metri"
+  },
+  {
+    "file": "Samuel fighting style.pdf",
+    "entities": 0,
+    "updates": 1,
+    "events": 0
+  },
+  {
+    "file": "SCU timeline from start to present_20261102-031135/SCU timeline from start to present_20261102-031135_compressed-compressed-pages-3.pdf",
+    "entities": 5,
+    "updates": 1,
+    "events": 2
+  },
+  {
+    "file": "soa and elina.pdf",
+    "entities": 1,
+    "updates": 4,
+    "events": 0
+  },
+  {
+    "file": "Issabela.pdf",
+    "entities": 2,
+    "updates": 4,
+    "events": 2
+  },
+  {
+    "file": "Dew (1)_1.pdf",
+    "error": "Gemini(gemini-3.8-flash) timed out after 21054ms"
+  },
+  {
+    "file": "ZAAN  (1).pdf",
+    "entities": 9,
+    "updates": 0,
+    "events": 1
+  },
+  {
+    "file": "Inhertances .pdf",
+    "error": "Gemini(gemini-3.5-flash) timed out after 13925ms"
+  }
+]

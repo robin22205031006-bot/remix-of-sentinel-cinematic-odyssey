@@ -8,12 +8,17 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { WifiOff } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteNav } from "@/components/site-nav";
+import { AmbientField } from "@/components/ambient-field";
+import { ScrollProgress } from "@/components/scroll-progress";
 import { AppearanceProvider } from "@/hooks/use-appearance";
+import { TypographyProvider } from "@/hooks/use-typography";
 import { supabase } from "@/integrations/supabase/client";
 import { syncSessionCache } from "@/lib/session-cache";
+import { useScuAudioGlobal } from "@/hooks/use-scu-audio";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -94,6 +99,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { name: "theme-color", content: "#0a0d14" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -125,9 +133,41 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const [offline, setOffline] = useState(false);
+  useScuAudioGlobal();
+  useEffect(() => {
+    const update = () => setOffline(!navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  useEffect(() => {
+    if (import.meta.env.PROD && "serviceWorker" in navigator) {
+      void navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+  useEffect(() => {
+    const onOnline = () => {
+      void queryClient.invalidateQueries();
+      void router.invalidate();
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [queryClient, router]);
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      if (
+        event !== "INITIAL_SESSION" &&
+        event !== "SIGNED_IN" &&
+        event !== "SIGNED_OUT" &&
+        event !== "USER_UPDATED" &&
+        event !== "TOKEN_REFRESHED"
+      )
+        return;
       syncSessionCache(queryClient, session?.user ?? null);
       queueMicrotask(() => {
         void router.invalidate();
@@ -150,11 +190,21 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <AppearanceProvider>
-        <div className="ambient-bg min-h-screen">
+        <TypographyProvider>
+        <div className="ambient-bg relative min-h-screen">
+          <AmbientField />
+          <ScrollProgress />
           <SiteNav />
+          {offline && (
+            <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/90 px-4 py-2 text-xs font-medium text-amber-200 shadow-lg backdrop-blur-sm">
+              <WifiOff className="h-3.5 w-3.5" />
+              Offline — showing cached archive data
+            </div>
+          )}
           <Outlet />
         </div>
         <Toaster />
+        </TypographyProvider>
       </AppearanceProvider>
     </QueryClientProvider>
   );

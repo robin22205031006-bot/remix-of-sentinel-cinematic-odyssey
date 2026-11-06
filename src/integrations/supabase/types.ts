@@ -35,6 +35,24 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_by: string | null
@@ -170,6 +188,45 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_memberships: {
+        Row: {
+          character_id: string
+          created_at: string
+          group_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          group_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_memberships_character_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_memberships_group_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingest_jobs: {
         Row: {
           created_at: string
@@ -294,6 +351,72 @@ export type Database = {
         }
         Relationships: []
       }
+      series: {
+        Row: {
+          cover_image_url: string | null
+          description: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          description?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          description?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      series_characters: {
+        Row: {
+          character_id: string
+          created_at: string
+          id: string
+          role_in_series: string | null
+          series_id: string
+          status: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          id?: string
+          role_in_series?: string | null
+          series_id: string
+          status?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          id?: string
+          role_in_series?: string | null
+          series_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "series_characters_character_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "series_characters_series_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       timeline_events: {
         Row: {
           created_at: string
@@ -389,6 +512,14 @@ export type Database = {
       }
       is_banned: { Args: { _uid: string }; Returns: boolean }
       is_staff: { Args: { _uid: string }; Returns: boolean }
+      merge_entities: {
+        Args: { primary_id: string; secondary_id: string }
+        Returns: Json
+      }
+      remap_series_characters: {
+        Args: { p_primary: string; p_secondary: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

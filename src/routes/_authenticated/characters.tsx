@@ -3,7 +3,10 @@ import { EntitySection } from "@/components/entity-section";
 import { CHARACTER_CATEGORIES } from "@/lib/entities";
 
 export const Route = createFileRoute("/_authenticated/characters")({
-  validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s["q"] === "string" ? { q: s["q"] } : {}),
+  validateSearch: (s: Record<string, unknown>): { q?: string; open?: string } => ({
+    ...(typeof s["q"] === "string" ? { q: s["q"] } : {}),
+    ...(typeof s["open"] === "string" ? { open: s["open"] } : {}),
+  }),
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
@@ -18,9 +21,9 @@ export const Route = createFileRoute("/_authenticated/characters")({
 });
 
 function Characters() {
-  const { q } = Route.useSearch();
+  const { q, open } = Route.useSearch();
   return (
-    <EntitySection kinds={["character"]} categories={CHARACTER_CATEGORIES} initialQuery={q ?? ""}
+    <EntitySection kinds={["character"]} categories={CHARACTER_CATEGORIES} initialQuery={q ?? ""} openId={open} view="characters"
       title="Characters" subtitle="Protagonists, antagonists, anti-heroes, anti-villains and support." />
   );
 }

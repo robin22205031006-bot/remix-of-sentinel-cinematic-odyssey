@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { CHARACTER_CATEGORIES, CHARACTER_STATUSES, GROUP_CATEGORIES, GROUP_STATUSES, fileToDataUrl, type Entity } from "@/lib/entities";
+import { sfx } from "@/lib/scu-audio";
+import { CHARACTER_STATUSES, GROUP_STATUSES, fileToDataUrl, type Entity } from "@/lib/entities";
 import { mergeLocks } from "@/lib/lore-merge";
 
 type Kind = Entity["kind"];
@@ -52,6 +53,16 @@ export function EntityDialog({
   const [sketchUrl, setSketchUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const isChar = kind === "character";
+
+  // Existing sectors for this entity type — admins can also type a custom one.
+  const kindsKey = [...allowedKinds].sort().join(",");
+  const { data: existingCategories } = useQuery({
+    queryKey: ["entity-categories", kindsKey],
+    queryFn: async () => {
+      const { data } = await supabase.from("entities").select("category").in("kind", allowedKinds);
+      return [...new Set((data ?? []).map((e) => e.category).filter((c): c is string => typeof c === "string" && c.trim().length > 0))].sort();
+    },
+  });
   const set = (k: "name" | "alias" | "role" | "description" | "stats") => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
 
   const save = async () => {
@@ -83,6 +94,7 @@ export function EntityDialog({
     }
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    if (entity) sfx.click(); else sfx.add();
     toast.success(entity ? "Saved" : "Created");
     qc.invalidateQueries({ queryKey: ["entities"] });
     qc.invalidateQueries({ queryKey: ["search-index"] });
@@ -110,7 +122,18 @@ export function EntityDialog({
             <div className="grid gap-1.5"><Label>{isChar ? "Faction / role" : "Role"}</Label><Input value={form.role} onChange={set("role")} /></div>
           </div>
           <div className="grid gap-1.5"><Label>Status</Label><Chips options={isChar ? CHARACTER_STATUSES : GROUP_STATUSES} value={form.status} onChange={(v) => setForm({ ...form, status: v || form.status })} /></div>
-          <div className="grid gap-1.5"><Label>{isChar ? "Narrative role" : "Group type"}</Label><Chips options={isChar ? CHARACTER_CATEGORIES : GROUP_CATEGORIES} value={form.category} onChange={(v) => setForm({ ...form, category: v })} /></div>
+          <div className="grid gap-1.5">
+            <Label>{isChar ? "Narrative role / sector" : "Group type / sector"}</Label>
+            <Input
+              list="entity-category-options"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              placeholder={isChar ? "Protagonist, Anti-Hero, or custom tier…" : "Faction, Clan, or custom tier…"}
+            />
+            <datalist id="entity-category-options">
+              {(existingCategories ?? []).map((c) => <option key={c} value={c} />)}
+            </datalist>
+          </div>
           <div className="grid gap-1.5"><Label>Description</Label><Textarea rows={5} value={form.description} onChange={set("description")} /></div>
           <div className="grid gap-1.5"><Label>Stats (one per line, e.g. "Power: 9")</Label><Textarea rows={3} value={form.stats} onChange={set("stats")} /></div>
           <div className="grid gap-1.5">

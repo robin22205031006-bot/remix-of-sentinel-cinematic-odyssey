@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bot, Clock, FileLock, Home, LogOut, MessagesSquare, Shield, Sparkles, Users, ZoomIn, ZoomOut } from "lucide-react";
+import { BookMarked, Bot, Clock, FileLock, Home, LogOut, MessagesSquare, Network, Shield, Sparkles, Users, Volume2, VolumeX, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useIsStaff, useSession } from "@/hooks/use-admin";
+import { useScuMute } from "@/hooks/use-scu-audio";
 import { useAppearance } from "@/hooks/use-appearance";
 import { supabase } from "@/integrations/supabase/client";
 import { STAFF_TAB, TABS, tabIndex } from "@/lib/nav";
@@ -10,11 +11,12 @@ import { DayNightToggle } from "./day-night-toggle";
 import { ThemeDrawer } from "./theme-drawer";
 import { UniversalSearch } from "./universal-search";
 
-const ICONS = { home: Home, orgs: Shield, chars: Users, time: Clock, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
+const ICONS = { home: Home, orgs: Shield, chars: Users, series: BookMarked, time: Clock, graph: Network, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
 
 export function SiteNav() {
   const isStaff = useIsStaff();
   const { data: user } = useSession();
+  const { muted, toggleMute } = useScuMute();
   const { zoom } = useAppearance();
   const qc = useQueryClient();
   const nav = useNavigate();
@@ -69,8 +71,8 @@ export function SiteNav() {
       <div className="glass glow-ring flex max-w-full items-center gap-0.5 rounded-full px-1.5 py-1.5">
         <div className="relative flex items-center overflow-x-auto [scrollbar-width:none]">
           <span
-            className="absolute inset-y-0 rounded-full bg-secondary transition-all duration-500 ease-[cubic-bezier(.2,.8,.2,1)]"
-            style={{ left: pill.left, width: pill.width, opacity: active >= 0 ? 1 : 0 }}
+            className="absolute inset-y-0 left-0 rounded-full bg-secondary transition-[transform,opacity,width] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] will-change-transform"
+            style={{ transform: `translateX(${pill.left}px)`, width: pill.width, opacity: active >= 0 ? 1 : 0 }}
           />
           {tabs.map((t, i) => {
             const Icon = ICONS[t.icon];
@@ -95,6 +97,14 @@ export function SiteNav() {
         <button aria-label="Zoom out text" onClick={() => zoom(-1)} className="hidden h-7 w-7 place-items-center rounded-full text-muted-foreground hover:text-foreground sm:grid"><ZoomOut className="h-3.5 w-3.5" /></button>
         <button aria-label="Zoom in text" onClick={() => zoom(1)} className="hidden h-7 w-7 place-items-center rounded-full text-muted-foreground hover:text-foreground sm:grid"><ZoomIn className="h-3.5 w-3.5" /></button>
         <DayNightToggle />
+        <button
+          aria-label={muted ? "Unmute sounds" : "Mute sounds"}
+          title={muted ? "Unmute" : "Mute"}
+          onClick={toggleMute}
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+        >
+          {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+        </button>
         {user ? (
           <button aria-label="Sign out" onClick={signOut} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"><LogOut className="h-3.5 w-3.5" /></button>
         ) : (
@@ -102,7 +112,7 @@ export function SiteNav() {
         )}
       </div>
       <div className="h-0.5 w-40 overflow-hidden rounded-full bg-border" aria-hidden>
-        <div className="h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${Math.max(progress, 6)}%` }} />
+        <div className="h-full w-full origin-left rounded-full bg-accent transition-transform duration-500" style={{ transform: `scaleX(${Math.max(progress, 6)}%)` }} />
       </div>
     </nav>
   );

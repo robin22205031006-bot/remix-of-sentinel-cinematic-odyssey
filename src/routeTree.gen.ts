@@ -18,8 +18,11 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedFandomRouteImport } from './routes/_authenticated/fandom'
+import { Route as AuthenticatedGraphRouteImport } from './routes/_authenticated/graph'
 import { Route as AuthenticatedIngestRouteImport } from './routes/_authenticated/ingest'
 import { Route as AuthenticatedOrgsRouteImport } from './routes/_authenticated/orgs'
+import { Route as AuthenticatedReaderRouteImport } from './routes/_authenticated/reader'
+import { Route as AuthenticatedSeriesRouteImport } from './routes/_authenticated/series'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
 import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -69,6 +72,11 @@ const AuthenticatedFandomRoute = AuthenticatedFandomRouteImport.update({
   path: '/fandom',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGraphRoute = AuthenticatedGraphRouteImport.update({
+  id: '/graph',
+  path: '/graph',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIngestRoute = AuthenticatedIngestRouteImport.update({
   id: '/ingest',
   path: '/ingest',
@@ -77,6 +85,16 @@ const AuthenticatedIngestRoute = AuthenticatedIngestRouteImport.update({
 const AuthenticatedOrgsRoute = AuthenticatedOrgsRouteImport.update({
   id: '/orgs',
   path: '/orgs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReaderRoute = AuthenticatedReaderRouteImport.update({
+  id: '/reader',
+  path: '/reader',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSeriesRoute = AuthenticatedSeriesRouteImport.update({
+  id: '/series',
+  path: '/series',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
@@ -104,8 +122,11 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AuthenticatedAiRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/fandom': typeof AuthenticatedFandomRoute
+  '/graph': typeof AuthenticatedGraphRoute
   '/ingest': typeof AuthenticatedIngestRoute
   '/orgs': typeof AuthenticatedOrgsRoute
+  '/reader': typeof AuthenticatedReaderRoute
+  '/series': typeof AuthenticatedSeriesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
   '/vault': typeof AuthenticatedVaultRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -119,8 +140,11 @@ export interface FileRoutesByTo {
   '/ai': typeof AuthenticatedAiRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/fandom': typeof AuthenticatedFandomRoute
+  '/graph': typeof AuthenticatedGraphRoute
   '/ingest': typeof AuthenticatedIngestRoute
   '/orgs': typeof AuthenticatedOrgsRoute
+  '/reader': typeof AuthenticatedReaderRoute
+  '/series': typeof AuthenticatedSeriesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
   '/vault': typeof AuthenticatedVaultRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -136,8 +160,11 @@ export interface FileRoutesById {
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
   '/_authenticated/fandom': typeof AuthenticatedFandomRoute
+  '/_authenticated/graph': typeof AuthenticatedGraphRoute
   '/_authenticated/ingest': typeof AuthenticatedIngestRoute
   '/_authenticated/orgs': typeof AuthenticatedOrgsRoute
+  '/_authenticated/reader': typeof AuthenticatedReaderRoute
+  '/_authenticated/series': typeof AuthenticatedSeriesRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -153,8 +180,11 @@ export interface FileRouteTypes {
     | '/ai'
     | '/characters'
     | '/fandom'
+    | '/graph'
     | '/ingest'
     | '/orgs'
+    | '/reader'
+    | '/series'
     | '/timeline'
     | '/vault'
     | '/.lovable/oauth/consent'
@@ -168,8 +198,11 @@ export interface FileRouteTypes {
     | '/ai'
     | '/characters'
     | '/fandom'
+    | '/graph'
     | '/ingest'
     | '/orgs'
+    | '/reader'
+    | '/series'
     | '/timeline'
     | '/vault'
     | '/.lovable/oauth/consent'
@@ -184,8 +217,11 @@ export interface FileRouteTypes {
     | '/_authenticated/ai'
     | '/_authenticated/characters'
     | '/_authenticated/fandom'
+    | '/_authenticated/graph'
     | '/_authenticated/ingest'
     | '/_authenticated/orgs'
+    | '/_authenticated/reader'
+    | '/_authenticated/series'
     | '/_authenticated/timeline'
     | '/_authenticated/vault'
     | '/.lovable/oauth/consent'
@@ -265,6 +301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFandomRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/graph': {
+      id: '/_authenticated/graph'
+      path: '/graph'
+      fullPath: '/graph'
+      preLoaderRoute: typeof AuthenticatedGraphRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ingest': {
       id: '/_authenticated/ingest'
       path: '/ingest'
@@ -277,6 +320,20 @@ declare module '@tanstack/react-router' {
       path: '/orgs'
       fullPath: '/orgs'
       preLoaderRoute: typeof AuthenticatedOrgsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reader': {
+      id: '/_authenticated/reader'
+      path: '/reader'
+      fullPath: '/reader'
+      preLoaderRoute: typeof AuthenticatedReaderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/series': {
+      id: '/_authenticated/series'
+      path: '/series'
+      fullPath: '/series'
+      preLoaderRoute: typeof AuthenticatedSeriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/timeline': {
@@ -308,8 +365,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiRoute: typeof AuthenticatedAiRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
   AuthenticatedFandomRoute: typeof AuthenticatedFandomRoute
+  AuthenticatedGraphRoute: typeof AuthenticatedGraphRoute
   AuthenticatedIngestRoute: typeof AuthenticatedIngestRoute
   AuthenticatedOrgsRoute: typeof AuthenticatedOrgsRoute
+  AuthenticatedReaderRoute: typeof AuthenticatedReaderRoute
+  AuthenticatedSeriesRoute: typeof AuthenticatedSeriesRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
 }
@@ -319,8 +379,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiRoute: AuthenticatedAiRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
   AuthenticatedFandomRoute: AuthenticatedFandomRoute,
+  AuthenticatedGraphRoute: AuthenticatedGraphRoute,
   AuthenticatedIngestRoute: AuthenticatedIngestRoute,
   AuthenticatedOrgsRoute: AuthenticatedOrgsRoute,
+  AuthenticatedReaderRoute: AuthenticatedReaderRoute,
+  AuthenticatedSeriesRoute: AuthenticatedSeriesRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
 }

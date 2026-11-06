@@ -9,6 +9,16 @@ export function validLoreStatus(kind: EntityKind, status: string | null): string
   return status && allowed.includes(status) ? status : null;
 }
 
+export const CHARACTER_CATEGORIES = ["Protagonist", "Antagonist", "Anti-Hero", "Anti-Villain", "Support"];
+export const GROUP_CATEGORIES = ["Faction", "Black Ops Team", "Clan", "Organization", "Cult", "Bloodline"];
+
+export function validEntityCategory(_kind: EntityKind, category: string | null | undefined): string | null {
+  // Category is a free-text "sector": standard archetypes and admin-defined
+  // custom tiers are all accepted; only blank values are rejected.
+  const c = category?.trim();
+  return c ? c : null;
+}
+
 export interface ProposedEntity {
   kind: EntityKind;
   name: string;
@@ -17,6 +27,9 @@ export interface ProposedEntity {
   status: string | null;
   description: string;
   quote: string;
+  category?: string | null | undefined;
+  /** Non-destructive conflict flags collected during consolidation (kind/status/role divergences). */
+  conflicts?: string[];
 }
 
 export interface ProposedUpdate {
@@ -54,7 +67,7 @@ export function filterGrounded(ex: Extraction, source: string): Extraction {
   return {
     new_entities: ex.new_entities.filter(
       (e) => normalize(e.name).length > 0 && isGrounded(e.quote, src) && src.includes(normalize(e.name)),
-    ).map((e) => ({ ...e, status: validLoreStatus(e.kind, e.status) })),
+    ).map((e) => ({ ...e, status: validLoreStatus(e.kind, e.status), category: validEntityCategory(e.kind, e.category) })),
     updates: ex.updates.filter(
       (u) => normalize(u.existing_name).length > 0 && isGrounded(u.quote, src) && src.includes(normalize(u.existing_name)),
     ),

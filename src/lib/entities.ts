@@ -5,11 +5,16 @@ import type { Tables } from "@/integrations/supabase/types";
 export type Entity = Tables<"entities">;
 export type LoreNote = Tables<"lore_notes">;
 export type TimelineEvent = Tables<"timeline_events">;
+export type EntityMembership = Tables<"entity_memberships">;
+
+/** Kinds that can act as the "group" side of a membership link. */
+export const GROUP_LINK_KINDS: Entity["kind"][] = ["organization", "clan", "bloodline", "faction"];
+
+import { CHARACTER_CATEGORIES, GROUP_CATEGORIES } from "./lore-merge";
 
 export const CHARACTER_STATUSES = ["Alive", "Dead", "Retired", "Missing", "Legend"];
 export const GROUP_STATUSES = ["Active", "Inactive"];
-export const CHARACTER_CATEGORIES = ["Protagonist", "Antagonist", "Anti-Hero", "Anti-Villain", "Support"];
-export const GROUP_CATEGORIES = ["Faction", "Black Ops Team", "Clan", "Organization", "Cult", "Bloodline"];
+export { CHARACTER_CATEGORIES, GROUP_CATEGORIES };
 
 export const entitiesQuery = (kinds: string[]) =>
   queryOptions({
@@ -22,6 +27,51 @@ export const entitiesQuery = (kinds: string[]) =>
         .in("kind", kinds as Entity["kind"][])
         .order("name");
       if (error) throw error;
+      return data;
+    },
+  });
+
+export const entityByIdQuery = (id: string) =>
+  queryOptions({
+    queryKey: ["entity", id],
+    enabled: !!id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("entities").select("*").eq("id", id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+/** Memberships where this entity is the character side. */
+export const characterLinksQuery = (characterId: string) =>
+  queryOptions({
+    queryKey: ["entity-links", "character", characterId],
+    enabled: !!characterId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("entity_memberships").select("*").eq("character_id", characterId);
+      if (error) {
+        // Table may not exist yet if the SQL migration hasn't been applied.
+        if (/entity_memberships|schema cache|does not exist/i.test(error.message)) return [] as EntityMembership[];
+        throw error;
+      }
+      return data;
+    },
+  });
+
+/** Memberships where this entity is the group side. */
+export const groupLinksQuery = (groupId: string) =>
+  queryOptions({
+    queryKey: ["entity-links", "group", groupId],
+    enabled: !!groupId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("entity_memberships").select("*").eq("group_id", groupId);
+      if (error) {
+        if (/entity_memberships|schema cache|does not exist/i.test(error.message)) return [] as EntityMembership[];
+        throw error;
+      }
       return data;
     },
   });

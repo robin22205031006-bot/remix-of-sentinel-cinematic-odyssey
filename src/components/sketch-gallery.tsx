@@ -32,7 +32,7 @@ export function SketchGallery({ images, name }: { images: string[]; name: string
       </Carousel>
       <div className="flex justify-center gap-1.5">
         {images.map((_, k) => (
-          <button key={k} aria-label={`Angle ${k + 1}`} onClick={() => api?.scrollTo(k)} className={`h-1.5 rounded-full transition-all ${k === i ? "w-5 bg-accent" : "w-1.5 bg-border"}`} />
+          <button key={k} aria-label={`Angle ${k + 1}`} onClick={() => api?.scrollTo(k)} className={`h-1.5 rounded-full transition-[width,background-color] duration-300 ${k === i ? "w-5 bg-accent" : "w-1.5 bg-border"}`} />
         ))}
       </div>
     </div>

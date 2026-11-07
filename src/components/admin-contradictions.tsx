@@ -20,41 +20,64 @@ function parseStatusConflict(text: string): { a: string; b: string } | null {
   return m?.[1] && m[2] ? { a: m[1], b: m[2] } : null;
 }
 
+const LIFE_STATUSES = ["Alive", "Dead", "Presumed Dead"] as const;
+
 export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
   const [scopedFor, setScopedFor] = useState<string | null>(null);
   const [scope, setScope] = useState<string>(CANON_SCOPES[0] ?? "Sentinels S1");
+  const [scopeKind, setScopeKind] = useState<"status" | "faction">("status");
   const [scopeStatus, setScopeStatus] = useState<string>("");
+  const [scopeFaction, setScopeFaction] = useState<string>("");
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-conflicts"] });
 
-  const resolve = async (c: ConflictRow, status: string, scopeLabel?: string) => {
+  const clearConflict = async (c: ConflictRow) => {
+    const { error } = await supabase.from("lore_notes").delete().eq("id", c.id);
+    if (error) throw error;
+  };
+
+  /** Global force: set canonical life status on the entity. */
+  const setCanonicalStatus = async (c: ConflictRow, status: string) => {
     setBusy(c.id);
     try {
-      if (scopeLabel) {
-        // Timeline-scoped: record the status for that arc, keep global status untouched.
-        const { error } = await supabase.from("lore_notes").insert({
-          entity_id: c.entity_id,
-          text: `[scope] status '${status}' applies to ${scopeLabel}`,
-          source: "admin-resolver",
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("entities").update({ status }).eq("id", c.entity_id);
-        if (error) throw error;
-        await supabase.from("lore_notes").insert({
-          entity_id: c.entity_id,
-          text: `[resolved] status canonically set to '${status}'`,
-          source: "admin-resolver",
-        });
-      }
-      const { error: delErr } = await supabase.from("lore_notes").delete().eq("id", c.id);
-      if (delErr) throw delErr;
-      toast.success(scopeLabel ? `Scoped '${status}' to ${scopeLabel}` : `Canon status set to '${status}'`);
+      const { error } = await supabase.from("entities").update({ status }).eq("id", c.entity_id);
+      if (error) throw error;
+      await supabase.from("lore_notes").insert({
+        entity_id: c.entity_id,
+        text: `[resolved] status canonically set to '${status}'`,
+        source: "admin-resolver",
+      });
+      await clearConflict(c);
+      toast.success(`Canon status set to '${status}'`);
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not resolve conflict.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** Scoped progression: attach a status or faction roster to one canon season. */
+  const saveScoped = async (c: ConflictRow) => {
+    setBusy(c.id);
+    try {
+      const note =
+        scopeKind === "status"
+          ? `[scope] status '${scopeStatus}' applies to ${scope}`
+          : `[scope] faction '${scopeFaction}' roster applies to ${scope}`;
+      const { error } = await supabase.from("lore_notes").insert({
+        entity_id: c.entity_id,
+        text: note,
+        source: "admin-resolver",
+      });
+      if (error) throw error;
+      await clearConflict(c);
+      toast.success(`Scoped to ${scope}`);
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save scoped status.");
     } finally {
       setBusy(null);
       setScopedFor(null);
@@ -65,11 +88,12 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
     <section className="glass rounded-2xl p-5">
       <h2 className="mb-1 text-2xl">Lore conflicts</h2>
       <p className="mb-3 text-sm text-muted-foreground">
-        Status disagreements across arcs — resolve globally or scope them to a season as a valid narrative progression.
+        Status and roster disagreements across arcs — resolve globally or scope them to a season as valid narrative progression.
       </p>
       <ul className="grid gap-2 text-sm">
         {conflicts.map((c) => {
           const parsed = parseStatusConflict(c.text);
+          const isFaction = /faction|team|member|org/i.test(c.text);
           return (
             <li key={c.id} className="rounded-lg bg-secondary/50 px-3 py-2">
               <span className="font-medium">{c.entity_name}</span>
@@ -77,28 +101,47 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
               <span className="ml-2 text-xs text-muted-foreground">
                 {c.source ?? ""} · {new Date(c.created_at).toLocaleDateString()}
               </span>
-              {parsed && (
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => resolve(c, parsed.a)}>
-                    Mark '{parsed.a}' Canonical
-                  </Button>
-                  <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => resolve(c, parsed.b)}>
-                    Mark '{parsed.b}' Canonical
-                  </Button>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {parsed &&
+                  LIFE_STATUSES.map((s) => (
+                    <Button
+                      key={s}
+                      size="sm"
+                      variant={s === "Presumed Dead" ? "secondary" : "outline"}
+                      disabled={busy === c.id}
+                      onClick={() => setCanonicalStatus(c, s)}
+                    >
+                      {s}
+                    </Button>
+                  ))}
+                {!parsed && isFaction && (
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant="outline"
                     disabled={busy === c.id}
                     onClick={() => {
                       setScopedFor(scopedFor === c.id ? null : c.id);
-                      setScopeStatus(parsed.a);
+                      setScopeKind("faction");
+                      setScopeFaction("");
                     }}
                   >
-                    Season/Timeline Progression
+                    Update Faction Roster Scope
                   </Button>
-                </div>
-              )}
-              {parsed && scopedFor === c.id && (
+                )}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={busy === c.id}
+                  onClick={() => {
+                    setScopedFor(scopedFor === c.id ? null : c.id);
+                    setScopeKind("status");
+                    setScopeStatus(parsed?.a ?? "Alive");
+                  }}
+                >
+                  Season/Timeline Progression
+                </Button>
+              </div>
+              {scopedFor === c.id && (
                 <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-accent/30 bg-accent/5 p-2">
                   <select
                     className="rounded-md border border-border bg-background px-2 py-1 text-xs"
@@ -109,14 +152,34 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
                   </select>
                   <select
                     className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-                    value={scopeStatus}
-                    onChange={(e) => setScopeStatus(e.target.value)}
+                    value={scopeKind}
+                    onChange={(e) => setScopeKind(e.target.value as "status" | "faction")}
                   >
-                    <option value={parsed.a}>{parsed.a}</option>
-                    <option value={parsed.b}>{parsed.b}</option>
+                    <option value="status">Life status</option>
+                    <option value="faction">Faction roster</option>
                   </select>
-                  <Button size="sm" disabled={busy === c.id} onClick={() => resolve(c, scopeStatus, scope)}>
-                    Save Scoped Status
+                  {scopeKind === "status" ? (
+                    <select
+                      className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+                      value={scopeStatus}
+                      onChange={(e) => setScopeStatus(e.target.value)}
+                    >
+                      {LIFE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <input
+                      className="w-40 rounded-md border border-border bg-background px-2 py-1 text-xs"
+                      placeholder="Faction name"
+                      value={scopeFaction}
+                      onChange={(e) => setScopeFaction(e.target.value)}
+                    />
+                  )}
+                  <Button
+                    size="sm"
+                    disabled={busy === c.id || (scopeKind === "faction" && !scopeFaction.trim())}
+                    onClick={() => saveScoped(c)}
+                  >
+                    Save Scoped
                   </Button>
                 </div>
               )}

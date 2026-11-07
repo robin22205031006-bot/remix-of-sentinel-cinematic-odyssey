@@ -44,7 +44,7 @@ export const GROUP_LINK_KINDS: Entity["kind"][] = ["organization", "clan", "bloo
 
 import { CHARACTER_CATEGORIES, GROUP_CATEGORIES } from "./lore-merge";
 
-export const CHARACTER_STATUSES = ["Alive", "Dead", "Retired", "Missing", "Legend"];
+export const CHARACTER_STATUSES = ["Alive", "Dead", "Presumed Dead", "Retired", "Missing", "Legend"];
 export const GROUP_STATUSES = ["Active", "Inactive"];
 export { CHARACTER_CATEGORIES, GROUP_CATEGORIES };
 

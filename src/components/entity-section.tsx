@@ -38,7 +38,7 @@ import { getCombatStats } from "@/lib/combat-stats";
 
 const statusClass: Record<string, string> = {
   Alive: "text-status-alive", Active: "text-status-alive",
-  Dead: "text-status-dead", Inactive: "text-status-neutral",
+  Dead: "text-status-dead", "Presumed Dead": "text-status-legend", Inactive: "text-status-neutral",
   Legend: "text-status-legend",
 };
 
@@ -395,6 +395,9 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
               ) : (
                 seasons.map((r, i) => {
                   const hue = SEASON_HUES[i % SEASON_HUES.length];
+                  const scoped = (notes ?? []).filter(
+                    (n) => n.text.startsWith("[scope]") && r.series?.title && n.text.includes(r.series.title),
+                  );
                   return (
                     <div key={r.id} className="rounded-xl border border-border/60 bg-secondary/20 p-4">
                       <div className="mb-2 flex items-center gap-2">
@@ -403,6 +406,15 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                         {r.status && <span className="text-[10px] uppercase text-muted-foreground">{r.status}</span>}
                       </div>
                       {r.role_in_series && <p className="mb-2 text-xs text-muted-foreground">{r.role_in_series}</p>}
+                      {scoped.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-1.5">
+                          {scoped.map((n) => (
+                            <span key={n.id} className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
+                              {n.text.replace(/^\[scope\]\s*/, "")}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {/* Per-season ability progression has no dedicated table yet. */}
                       <p className="text-xs italic text-muted-foreground">No database for this season.</p>
                     </div>

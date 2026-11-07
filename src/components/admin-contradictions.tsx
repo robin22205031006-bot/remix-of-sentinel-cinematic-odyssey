@@ -14,13 +14,27 @@ export interface ConflictRow {
   created_at: string;
 }
 
-/** Parses "[conflict] status: archived 'X' vs extracted 'Y'" into options. */
-function parseStatusConflict(text: string): { a: string; b: string } | null {
-  const m = text.match(/status:\s*archived\s*'([^']+)'\s*vs\s*(?:extracted\s*)?'([^']+)'/i);
-  return m?.[1] && m[2] ? { a: m[1], b: m[2] } : null;
+interface ParsedConflict {
+  field: string; // status | kind | category | role | faction | other
+  a: string;     // archived value
+  b: string;     // extracted value
+}
+
+/** Parses "[conflict] <field>: archived 'X' vs extracted 'Y'" into a question. */
+function parseConflict(text: string): ParsedConflict | null {
+  const m = text.match(/\[conflict\]\s*([a-z_]+):\s*archived\s*'([^']+)'\s*vs\s*(?:extracted\s*)?'([^']+)'/i);
+  if (!m?.[1] || !m[2] || !m[3]) return null;
+  return { field: m[1].toLowerCase(), a: m[2], b: m[3] };
 }
 
 const LIFE_STATUSES = ["Alive", "Dead", "Presumed Dead"] as const;
+const FIELD_LABELS: Record<string, string> = {
+  status: "life status",
+  kind: "entity type",
+  category: "category",
+  role: "role",
+  faction: "faction",
+};
 
 export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] }) {
   const qc = useQueryClient();
@@ -38,19 +52,21 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
     if (error) throw error;
   };
 
-  /** Global force: set canonical life status on the entity. */
-  const setCanonicalStatus = async (c: ConflictRow, status: string) => {
+  /** Admin picks one option — writes it as canon and clears the flag. */
+  const pick = async (c: ConflictRow, field: string, value: string) => {
     setBusy(c.id);
     try {
-      const { error } = await supabase.from("entities").update({ status }).eq("id", c.entity_id);
-      if (error) throw error;
+      if (field === "status") {
+        const { error } = await supabase.from("entities").update({ status: value }).eq("id", c.entity_id);
+        if (error) throw error;
+      }
       await supabase.from("lore_notes").insert({
         entity_id: c.entity_id,
-        text: `[resolved] status canonically set to '${status}'`,
+        text: `[resolved] ${field} canonically set to '${value}'`,
         source: "admin-resolver",
       });
       await clearConflict(c);
-      toast.success(`Canon status set to '${status}'`);
+      toast.success(`Canon ${FIELD_LABELS[field] ?? field} set to '${value}'`);
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not resolve conflict.");
@@ -88,61 +104,84 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
     <section className="glass rounded-2xl p-5">
       <h2 className="mb-1 text-2xl">Lore conflicts</h2>
       <p className="mb-3 text-sm text-muted-foreground">
-        Status and roster disagreements across arcs — resolve globally or scope them to a season as valid narrative progression.
+        Each entry is a question — pick the canon answer, or scope it to a season as valid narrative progression.
       </p>
-      <ul className="grid gap-2 text-sm">
+      <ul className="grid gap-3 text-sm">
         {conflicts.map((c) => {
-          const parsed = parseStatusConflict(c.text);
+          const parsed = parseConflict(c.text);
+          const isStatus = parsed?.field === "status";
           const isFaction = /faction|team|member|org/i.test(c.text);
           return (
-            <li key={c.id} className="rounded-lg bg-secondary/50 px-3 py-2">
-              <span className="font-medium">{c.entity_name}</span>
-              <span className="text-muted-foreground"> — {c.text}</span>
-              <span className="ml-2 text-xs text-muted-foreground">
-                {c.source ?? ""} · {new Date(c.created_at).toLocaleDateString()}
-              </span>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {parsed &&
-                  LIFE_STATUSES.map((s) => (
+            <li key={c.id} className="rounded-lg border border-border/60 bg-secondary/40 px-4 py-3">
+              {/* Question header */}
+              <p className="font-medium">
+                {parsed
+                  ? `${c.entity_name}: which ${FIELD_LABELS[parsed.field] ?? parsed.field} is canon?`
+                  : `${c.entity_name}: resolve this conflict?`}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {c.text} · {c.source ?? ""} · {new Date(c.created_at).toLocaleDateString()}
+              </p>
+
+              {/* Answer options */}
+              {parsed && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {isStatus ? (
+                    LIFE_STATUSES.map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={s === "Presumed Dead" ? "secondary" : "outline"}
+                        disabled={busy === c.id}
+                        onClick={() => pick(c, "status", s)}
+                      >
+                        {s}
+                      </Button>
+                    ))
+                  ) : (
+                    <>
+                      <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => pick(c, parsed.field, parsed.a)}>
+                        Keep '{parsed.a}'
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => pick(c, parsed.field, parsed.b)}>
+                        Use '{parsed.b}'
+                      </Button>
+                    </>
+                  )}
+                  {!parsed && isFaction && (
                     <Button
-                      key={s}
                       size="sm"
-                      variant={s === "Presumed Dead" ? "secondary" : "outline"}
+                      variant="outline"
                       disabled={busy === c.id}
-                      onClick={() => setCanonicalStatus(c, s)}
+                      onClick={() => {
+                        setScopedFor(scopedFor === c.id ? null : c.id);
+                        setScopeKind("faction");
+                        setScopeFaction("");
+                      }}
                     >
-                      {s}
+                      Update Faction Roster Scope
                     </Button>
-                  ))}
-                {!parsed && isFaction && (
+                  )}
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={busy === c.id}
                     onClick={() => {
                       setScopedFor(scopedFor === c.id ? null : c.id);
-                      setScopeKind("faction");
+                      setScopeKind(isStatus ? "status" : "faction");
+                      setScopeStatus(parsed?.a ?? "Alive");
                       setScopeFaction("");
                     }}
                   >
-                    Update Faction Roster Scope
+                    Season/Timeline Progression
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busy === c.id}
-                  onClick={() => {
-                    setScopedFor(scopedFor === c.id ? null : c.id);
-                    setScopeKind("status");
-                    setScopeStatus(parsed?.a ?? "Alive");
-                  }}
-                >
-                  Season/Timeline Progression
-                </Button>
-              </div>
+                </div>
+              )}
+
+              {/* Scoped selector */}
               {scopedFor === c.id && (
                 <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-accent/30 bg-accent/5 p-2">
+                  <span className="text-xs text-muted-foreground">Attach to:</span>
                   <select
                     className="rounded-md border border-border bg-background px-2 py-1 text-xs"
                     value={scope}

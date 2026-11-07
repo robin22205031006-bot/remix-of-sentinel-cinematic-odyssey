@@ -28,6 +28,7 @@ import { SketchGallery } from "./sketch-gallery";
 import { StatRadar } from "./stat-radar";
 import { CompareSentinel } from "./compare-sentinel";
 import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
+import { AbilityCardCanvas } from "./ability-canvas";
 import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
 import { ABILITY_GROUP_LABELS, abilityDef, sortAbilities, type AbilityGroup } from "@/lib/abilities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -273,6 +274,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           </div>
         )}
         <section className="morph-in relative grid content-start gap-6 p-5 text-sm leading-relaxed sm:p-7 lg:p-10">
+          <AbilityCardCanvas abilities={e.abilities} density={2.2} className="pointer-events-none absolute inset-0 h-full w-full opacity-35" />
           {/* Hero render — right side, rim-lit by active accent */}
           {e.image_url && (
             <div className="pointer-events-none absolute right-0 top-0 hidden h-full w-[38%] items-end justify-center overflow-hidden lg:flex" aria-hidden>
@@ -347,9 +349,12 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           <SketchGallery images={e.sketches} name={e.name} />
           {dossierTab === "lore" && e.description && <p className="whitespace-pre-line text-foreground/85">{e.description}</p>}
           {dossierTab === "lore" && combat && (
-            <div className="rounded-xl border border-white/10 bg-secondary/20 p-4">
+            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-secondary/20 p-4">
+              <AbilityCardCanvas abilities={e.abilities} className="pointer-events-none absolute inset-0 h-full w-full opacity-20 mix-blend-screen" />
+              <div className="relative">
               <h4 className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Combat metrics</h4>
               <StatRadar a={combat} nameA={e.name} size={230} />
+              </div>
             </div>
           )}
           {dossierTab === "powers" && (e.abilities?.length ?? 0) > 0 && (
@@ -535,6 +540,7 @@ function ShowcaseView({ list, onOpen }: { list: Entity[]; onOpen: (e: Entity, ev
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-secondary via-background to-accent/20" />
           )}
+          <AbilityCardCanvas abilities={e.abilities} className="pointer-events-none absolute inset-0 h-full w-full opacity-40 transition-opacity group-hover:opacity-75" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
           <div className="relative flex h-full min-h-[22rem] flex-col justify-between p-5">
             <div className="flex justify-between">
@@ -693,6 +699,7 @@ export function EntitySection({
                 className={`glass group relative flex gap-4 overflow-hidden rounded-2xl p-4 transition-[transform,box-shadow,border-radius] duration-300 hover:-translate-y-0.5 hover:rounded-tr-[2rem] hover:glow-ring ${tierDef(e.character_tier)?.vfxClass ?? ""} ${animationClass(e.animation_style)}`}
                 style={{ "--scu-aura": e.accent_glow ?? e.theme_color ?? "#a855f7" } as unknown as MotionStyle}
               >
+                <AbilityCardCanvas abilities={e.abilities} className="pointer-events-none absolute inset-0 h-full w-full opacity-30 transition-opacity group-hover:opacity-60" />
                 <button
                   className="flex min-w-0 flex-1 gap-4"
                   onClick={(ev) => {

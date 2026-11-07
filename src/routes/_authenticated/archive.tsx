@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Castle, Clock, Network, Shield } from "lucide-react";
 import { SectionBoundary } from "@/components/section-boundary";
 import { PanelSkeleton } from "@/components/route-skeleton";
+import { CrimsonBloodlineTheme } from "@/components/ability-canvas";
 
 const Orgs = lazy(() => import("./orgs").then((m) => ({ default: m.Orgs })));
 const Clans = lazy(() => import("./clans").then((m) => ({ default: m.Clans })));
@@ -33,7 +34,8 @@ function Archive() {
   const active = MODULES.find((m) => m.id === module)!;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-5">
+    <main className="relative mx-auto max-w-6xl px-4 pb-24 sm:px-5">
+      <CrimsonBloodlineTheme className="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-25" />
       <header className="mb-6 pt-28">
         <p className="text-[11px] uppercase tracking-[0.25em] text-accent">Lore Vault</p>
         <h1 className="mt-2 text-5xl font-medium glow-text">Archive</h1>

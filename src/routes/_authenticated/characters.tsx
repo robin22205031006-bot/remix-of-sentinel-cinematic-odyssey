@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EntitySection } from "@/components/entity-section";
+import { CyanNeuralPlexusTheme } from "@/components/ability-canvas";
 import { CHARACTER_CATEGORIES } from "@/lib/entities";
 
 export const Route = createFileRoute("/_authenticated/characters")({
@@ -23,7 +24,10 @@ export const Route = createFileRoute("/_authenticated/characters")({
 function Characters() {
   const { q, open } = Route.useSearch();
   return (
-    <EntitySection kinds={["character"]} categories={CHARACTER_CATEGORIES} initialQuery={q ?? ""} openId={open} view="characters"
-      title="Characters" subtitle="Protagonists, antagonists, anti-heroes, anti-villains and support." />
+    <div className="relative">
+      <CyanNeuralPlexusTheme className="pointer-events-none fixed inset-0 -z-10 h-full w-full opacity-20" />
+      <EntitySection kinds={["character"]} categories={CHARACTER_CATEGORIES} initialQuery={q ?? ""} openId={open} view="characters"
+        title="Characters" subtitle="Protagonists, antagonists, anti-heroes, anti-villains and support." />
+    </div>
   );
 }

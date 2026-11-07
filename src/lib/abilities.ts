@@ -30,6 +30,12 @@ export const ABILITY_REGISTRY: AbilityDef[] = [
   { key: "athenas_judgement", label: "Athena's Judgement", tier: "Mythic", group: "power", color: "#ff2d2d", icon: Scale, description: "Sunburst gold judgement art — apex-tier destructive authority." },
   { key: "aether_dominion", label: "Aether Dominion", tier: "Mythic", group: "power", color: "#9d4edd", icon: Orbit, description: "Neon violet void command over the aether." },
   { key: "omni_ergon", label: "Omni-Ergon", tier: "Mythic", group: "power", color: "#7dd3fc", icon: Sparkles, description: "Iridescent prism-shift command of all elements combined." },
+  { key: "wind_guardian", label: "Wind Guardian", tier: "Mythic", group: "power", color: "#38bdf8", icon: Wind, description: "Elemental guardianship of wind — storm-crowned authority over gales and sky." },
+  { key: "water_guardian", label: "Water Guardian", tier: "Mythic", group: "power", color: "#0284c7", icon: Waves, description: "Elemental guardianship of water — unlocks Cryokinesis in guardian state." },
+  { key: "fire_guardian", label: "Fire Guardian", tier: "Mythic", group: "power", color: "#ef4444", icon: Flame, description: "Elemental guardianship of fire — inferno command." },
+  { key: "nature_guardian", label: "Nature Guardian", tier: "Mythic", group: "power", color: "#34d399", icon: Leaf, description: "Elemental guardianship of nature — verdant sphere techniques." },
+  { key: "sky_guardian", label: "Sky Guardian", tier: "Mythic", group: "power", color: "#a78bfa", icon: Orbit, description: "Elemental guardianship of the sky — aerial dominance." },
+  { key: "earth_guardian", label: "Earth Guardian", tier: "Mythic", group: "power", color: "#d97706", icon: Mountain, description: "Elemental guardianship of earth — terrain command." },
 
   // ---- Legendary & cosmic arts ----
   { key: "qahr_al_wujud", label: "Qahr al-Wujud", tier: "Legendary", group: "power", color: GOLD, icon: Crown, description: "The Subjugation of Existence — Agnus imposes his will as the highest command; reality itself yields within his radius." },

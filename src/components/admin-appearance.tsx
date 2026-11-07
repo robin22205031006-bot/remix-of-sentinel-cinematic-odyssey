@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useTypography } from "@/hooks/use-typography";
-import { CARD_EFFECTS, type TypographySettings } from "@/lib/typography";
+import { CARD_EFFECTS, UI_MODES, type TypographySettings } from "@/lib/typography";
 import type { Json } from "@/integrations/supabase/types";
 
 const FONT_SIZE_STEPS = 10;
@@ -53,6 +53,21 @@ export function AdminAppearance() {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-1.5 sm:col-span-2">
+          <Label>Global UI/UX mode</Label>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {UI_MODES.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => set({ uiMode: m.id })}
+                className={`rounded-xl border p-3 text-left text-sm transition-all ${s.uiMode === m.id ? "border-accent bg-accent/10 glow-ring" : "border-border hover:border-accent/50"}`}
+              >
+                <span className="block font-medium">{m.label}</span>
+                <span className="mt-1 block text-[11px] text-muted-foreground">{m.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid gap-1.5">
           <Label>Card surface effect</Label>
           <select value={s.cardEffect ?? "glass"} onChange={(e) => set({ cardEffect: e.target.value as TypographySettings["cardEffect"] })} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
@@ -85,6 +100,23 @@ export function AdminAppearance() {
             Bold focus rings
           </label>
         </div>
+        {/* Display tuning HUD */}
+        {([
+          ["brightness", "Brightness"], ["contrast", "Contrast"], ["saturation", "Saturation"],
+          ["hue", "Hue tint"], ["glow", "Glow intensity"],
+        ] as const).map(([key, label]) => (
+          <div key={key} className="grid gap-1.5">
+            <Label>{label} — {key === "hue" ? `${s[key] ?? 0}°` : `${s[key] ?? 100}%`}</Label>
+            <input
+              type="range"
+              min={key === "hue" ? -180 : 0}
+              max={key === "hue" ? 180 : 200}
+              value={s[key] ?? (key === "hue" ? 0 : 100)}
+              onChange={(e) => set({ [key]: Number(e.target.value) } as Partial<TypographySettings>)}
+              className="h-1.5 w-full accent-rose-500"
+            />
+          </div>
+        ))}
       </div>
     </section>
   );

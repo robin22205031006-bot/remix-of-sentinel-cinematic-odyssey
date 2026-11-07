@@ -188,8 +188,12 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
     if (dy > 110 || Math.abs(dx) > 140) onClose();
   };
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, []);
+
   return (
     <motion.div
+      ref={scrollRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.2 } }}
       exit={{ opacity: 0, transition: { duration: 0.18 } }}

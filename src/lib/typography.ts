@@ -24,7 +24,7 @@ export interface CustomFont {
 
 export type CardEffect =
   | "glass" | "neumorphism" | "drop-shadow" | "glow" | "gradient"
-  | "outer-glow" | "inner-shadow" | "bevel" | "satin" | "texture";
+  | "outer-glow" | "inner-shadow" | "bevel" | "satin" | "texture" | "comic";
 
 export const CARD_EFFECTS: { id: CardEffect; label: string }[] = [
   { id: "glass", label: "01. Glass Effect" },
@@ -37,6 +37,15 @@ export const CARD_EFFECTS: { id: CardEffect; label: string }[] = [
   { id: "bevel", label: "08. Bevel & Emboss" },
   { id: "satin", label: "09. Satin Effect" },
   { id: "texture", label: "10. Texture Overlay" },
+  { id: "comic", label: "11. Comic Ink / Halftone" },
+];
+
+export type UiMode = "gaming" | "minimal" | "manga";
+
+export const UI_MODES: { id: UiMode; label: string; desc: string }[] = [
+  { id: "gaming", label: "Mode A — AAA Gaming / Cyberpunk", desc: "Glassmorphism, neon glow, HUD styling." },
+  { id: "minimal", label: "Mode B — Calm / Minimalist", desc: "Soft neumorphism, clean type, relaxed padding." },
+  { id: "manga", label: "Mode C — Manga & Comic", desc: "Ink-hatch borders, halftone dots, action panels." },
 ];
 
 export type Density = "relaxed" | "standard" | "tight";
@@ -60,6 +69,14 @@ export interface TypographySettings {
   smoothMotion: boolean;
   /** Bold focus rings on interactive elements. */
   boldFocus: boolean;
+  /** Global UI/UX preset: gaming | minimal | manga. */
+  uiMode?: UiMode;
+  /** Display tuning: 0-200 sliders applied as CSS filter vars on .glass. */
+  brightness?: number;
+  contrast?: number;
+  saturation?: number;
+  hue?: number;
+  glow?: number;
 }
 
 export const DEFAULT_TYPOGRAPHY: TypographySettings = {
@@ -79,6 +96,12 @@ export const DEFAULT_TYPOGRAPHY: TypographySettings = {
   density: "standard",
   smoothMotion: true,
   boldFocus: true,
+  uiMode: "gaming",
+  brightness: 100,
+  contrast: 100,
+  saturation: 100,
+  hue: 0,
+  glow: 100,
 };
 
 /** Curated tactical / sci-fi faces offered in the admin picker. */
@@ -145,6 +168,13 @@ export function applyTypography(s: TypographySettings): void {
   root.setAttribute("data-cardfx", s.cardEffect ?? "glass");
   root.setAttribute("data-motion", s.smoothMotion === false ? "off" : "on");
   root.setAttribute("data-focus", s.boldFocus === false ? "soft" : "bold");
+  root.setAttribute("data-ui-mode", s.uiMode ?? "gaming");
+  const pct = (v: number | undefined, d = 100) => `${Math.min(200, Math.max(0, v ?? d))}%`;
+  root.style.setProperty("--scu-brightness", pct(s.brightness));
+  root.style.setProperty("--scu-contrast", pct(s.contrast));
+  root.style.setProperty("--scu-saturation", pct(s.saturation));
+  root.style.setProperty("--scu-hue", `${Math.min(360, Math.max(-360, s.hue ?? 0))}deg`);
+  root.style.setProperty("--scu-glow", pct(s.glow));
   for (const { key } of SECTION_KEYS) {
     const sec = s.sections[key];
     if (sec.text) root.style.setProperty(`--scu-sec-${key}-text`, sec.text);

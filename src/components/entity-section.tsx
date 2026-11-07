@@ -210,7 +210,9 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.2 } }}
       exit={{ opacity: 0, transition: { duration: 0.18 } }}
-      className="fixed inset-0 z-30 overflow-y-auto bg-background/80 backdrop-blur-sm"
+      className="fixed inset-0 z-30 overflow-y-auto bg-black/55 backdrop-blur-md"
+      layoutId={`card-${e.id}`}
+      transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onClick={onClose}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
@@ -665,10 +667,13 @@ export function EntitySection({
       ) : (
         <div className={viewMode === "grid" ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3"}>
           <AnimatePresence initial={false}>
-            {list.map((e, i) => (
+            {list.map((e, i) => {
+              if (open?.id === e.id) return null; // unmount → shared-element morph into dossier
+              return (
               <motion.article
                 key={e.id}
                 layout
+                layoutId={`card-${e.id}`}
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0, transition: { delay: Math.min(i * 0.03, 0.45), duration: 0.3, ease: [0.2, 0.8, 0.2, 1] } }}
                 exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.18, ease: "easeIn" } }}
@@ -695,7 +700,8 @@ export function EntitySection({
                   </div>
                 )}
               </motion.article>
-            ))}
+              );
+            })}
           </AnimatePresence>
         </div>
       )}

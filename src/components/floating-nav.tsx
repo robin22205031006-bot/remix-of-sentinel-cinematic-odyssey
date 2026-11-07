@@ -43,7 +43,14 @@ export function FloatingNav() {
   return (
     <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
       <AnimatePresence>
-        {open && items.map((item, i) => {
+        {open && (
+          <motion.div
+            className="absolute right-0 top-0 h-full w-full"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+            initial="hidden"
+            animate="show"
+          >
+          {items.map((item, i) => {
           const angle = -90 + (i - (items.length - 1) / 2) * 38;
           const rad = (angle * Math.PI) / 180;
           const x = Math.cos(rad) * 110;
@@ -51,10 +58,13 @@ export function FloatingNav() {
           return (
             <motion.div
               key={item.to}
-              initial={{ opacity: 0, scale: 0.4, x: 0, y: 0 }}
-              animate={{ opacity: 1, scale: 1, x, y }}
-              exit={{ opacity: 0, scale: 0.4, x: 0, y: 0 }}
-              transition={{ type: "spring", stiffness: 320, damping: 22, delay: i * 0.03 }}
+              variants={{
+                hidden: { opacity: 0, scale: 0.3, x: 0, y: 0 },
+                show: { opacity: 1, scale: 1, x, y, transition: { type: "spring", stiffness: 300, damping: 25, mass: 0.8, delay: i * 0.05 } },
+              }}
+              initial="hidden"
+              animate="show"
+              exit={{ opacity: 0, scale: 0.3, x: 0, y: 0, transition: { duration: 0.15, ease: "easeIn" } }}
               className="absolute right-0 top-0"
             >
               <Link
@@ -67,7 +77,9 @@ export function FloatingNav() {
               </Link>
             </motion.div>
           );
-        })}
+          })}
+          </motion.div>
+          )}
       </AnimatePresence>
       <motion.button
         whileTap={{ scale: 0.9 }}

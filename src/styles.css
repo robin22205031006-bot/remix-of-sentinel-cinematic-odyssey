@@ -278,6 +278,7 @@ h1, h2, h3, h4 {
 /* GPU-friendly: only transform/opacity/box-shadow animate. */
 
 .tier-vfx-mythic {
+  will-change: transform, opacity, box-shadow;
   animation: scu-tier-mythic 2.6s ease-in-out infinite;
   box-shadow: 0 0 0 1px rgba(255, 0, 51, 0.55), 0 0 18px rgba(255, 0, 51, 0.35);
 }
@@ -287,6 +288,7 @@ h1, h2, h3, h4 {
 }
 
 .tier-vfx-angle {
+  will-change: transform, opacity, box-shadow;
   animation: scu-tier-angle 3.2s ease-in-out infinite;
   box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.4), 0 0 16px rgba(255, 240, 200, 0.25);
 }
@@ -296,6 +298,7 @@ h1, h2, h3, h4 {
 }
 
 .tier-vfx-guardian {
+  will-change: transform, opacity, box-shadow;
   animation: scu-tier-guardian 3.8s ease-in-out infinite;
   box-shadow: 0 0 0 1px rgba(14, 116, 144, 0.55), 0 0 14px rgba(14, 116, 144, 0.3);
 }
@@ -321,13 +324,15 @@ h1, h2, h3, h4 {
 }
 
 /* Per-card animation_style overlays */
-.anim-aura-pulse { animation: scu-aura-pulse 3s ease-in-out infinite; }
+.anim-aura-pulse {
+  will-change: transform, opacity, box-shadow; animation: scu-aura-pulse 3s ease-in-out infinite; }
 @keyframes scu-aura-pulse {
   0%, 100% { box-shadow: 0 0 0 0 var(--scu-aura, rgba(168, 85, 247, 0.35)); }
   50% { box-shadow: 0 0 22px 2px var(--scu-aura, rgba(168, 85, 247, 0.5)); }
 }
 
-.anim-embers { position: relative; overflow: hidden; }
+.anim-embers {
+  will-change: transform, opacity, box-shadow; position: relative; overflow: hidden; }
 .anim-embers::before,
 .anim-embers::after {
   content: "";
@@ -349,7 +354,8 @@ h1, h2, h3, h4 {
   to { transform: translate3d(-8px, -60px, 0); }
 }
 
-.anim-void-rift { position: relative; overflow: hidden; }
+.anim-void-rift {
+  will-change: transform, opacity, box-shadow; position: relative; overflow: hidden; }
 .anim-void-rift::before {
   content: "";
   position: absolute;
@@ -363,7 +369,8 @@ h1, h2, h3, h4 {
   50% { transform: scale(1.08); opacity: 1; }
 }
 
-.anim-holographic { position: relative; overflow: hidden; }
+.anim-holographic {
+  will-change: transform, opacity, box-shadow; position: relative; overflow: hidden; }
 .anim-holographic::after {
   content: "";
   position: absolute;

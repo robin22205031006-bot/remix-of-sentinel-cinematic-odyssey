@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Castle, Clock, Network, Shield } from "lucide-react";
-import { RelationshipGraph } from "@/components/relationship-graph";
 import { SectionBoundary } from "@/components/section-boundary";
-import { Orgs } from "./orgs";
-import { Clans } from "./clans";
-import { Timeline } from "./timeline";
+import { PanelSkeleton } from "@/components/route-skeleton";
+
+const Orgs = lazy(() => import("./orgs").then((m) => ({ default: m.Orgs })));
+const Clans = lazy(() => import("./clans").then((m) => ({ default: m.Clans })));
+const Timeline = lazy(() => import("./timeline").then((m) => ({ default: m.Timeline })));
+const RelationshipGraph = lazy(() => import("@/components/relationship-graph").then((m) => ({ default: m.RelationshipGraph })));
 
 export const Route = createFileRoute("/_authenticated/archive")({
   head: () => ({
@@ -56,14 +58,16 @@ function Archive() {
 
       <section aria-label={active.t}>
         <SectionBoundary key={module} label={active.t}>
-          {module === "orgs" && <Orgs />}
-          {module === "clans" && <Clans />}
-          {module === "graph" && (
-            <div className="glass rounded-2xl p-4">
-              <RelationshipGraph />
-            </div>
-          )}
-          {module === "timeline" && <Timeline />}
+          <Suspense fallback={<PanelSkeleton className="h-[50vh]" />}>
+            {module === "orgs" && <Orgs />}
+            {module === "clans" && <Clans />}
+            {module === "graph" && (
+              <div className="glass rounded-2xl p-4">
+                <RelationshipGraph />
+              </div>
+            )}
+            {module === "timeline" && <Timeline />}
+          </Suspense>
         </SectionBoundary>
       </section>
     </main>

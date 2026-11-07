@@ -51,7 +51,7 @@ export { CHARACTER_CATEGORIES, GROUP_CATEGORIES };
 export const entitiesQuery = (kinds: string[]) =>
   queryOptions({
     queryKey: ["entities", kinds],
-    staleTime: 60_000,
+    staleTime: 300_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entities")
@@ -67,7 +67,7 @@ export const entityByIdQuery = (id: string) =>
   queryOptions({
     queryKey: ["entity", id],
     enabled: !!id,
-    staleTime: 60_000,
+    staleTime: 300_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("entities").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
@@ -80,7 +80,7 @@ export const characterLinksQuery = (characterId: string) =>
   queryOptions({
     queryKey: ["entity-links", "character", characterId],
     enabled: !!characterId,
-    staleTime: 30_000,
+    staleTime: 120_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("entity_memberships").select("*").eq("character_id", characterId);
       if (error) {
@@ -97,7 +97,7 @@ export const groupLinksQuery = (groupId: string) =>
   queryOptions({
     queryKey: ["entity-links", "group", groupId],
     enabled: !!groupId,
-    staleTime: 30_000,
+    staleTime: 120_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("entity_memberships").select("*").eq("group_id", groupId);
       if (error) {
@@ -110,7 +110,7 @@ export const groupLinksQuery = (groupId: string) =>
 
 export const entityRelationsQuery = queryOptions({
   queryKey: ["entity-relations"],
-  staleTime: 30_000,
+  staleTime: 120_000,
   queryFn: async () => {
     const { data, error } = await supabase.from("entity_relations").select("*");
     if (error) {
@@ -126,7 +126,7 @@ export const characterRelationshipsQuery = (entityId: string) =>
   queryOptions({
     queryKey: ["char-relationships", entityId],
     enabled: !!entityId,
-    staleTime: 30_000,
+    staleTime: 120_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("character_relationships")
@@ -145,7 +145,7 @@ export const childEntitiesQuery = (parentId: string) =>
   queryOptions({
     queryKey: ["entity-children", parentId],
     enabled: !!parentId,
-    staleTime: 60_000,
+    staleTime: 300_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("entities").select("*").eq("parent_id", parentId).order("name");
       if (error) {
@@ -159,7 +159,7 @@ export const childEntitiesQuery = (parentId: string) =>
 export const notesQuery = (entityId: string) =>
   queryOptions({
     queryKey: ["notes", entityId],
-    staleTime: 60_000,
+    staleTime: 300_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lore_notes")
@@ -173,7 +173,7 @@ export const notesQuery = (entityId: string) =>
 
 export const timelineQuery = queryOptions({
   queryKey: ["timeline"],
-  staleTime: 60_000,
+  staleTime: 300_000,
   queryFn: async () => {
     const { data, error } = await supabase.from("timeline_events").select("*").order("sort_order");
     if (error) throw error;

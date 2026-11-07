@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, BookMarked, Bot, Castle, Clock, EyeOff, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Music, Network, Shield, Sparkles, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
+import { Archive, BookMarked, Bot, Castle, Clock, EyeOff, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Music, Network, Shield, Sparkles, User, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useIsStaff, useSession } from "@/hooks/use-admin";
 import { useScuMute } from "@/hooks/use-scu-audio";
@@ -20,6 +20,15 @@ const ICONS = { home: Home, orgs: Shield, chars: Users, abilities: WandSparkles,
 export function SiteNav() {
   const isStaff = useIsStaff();
   const { data: user } = useSession();
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user?.id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("display_name").eq("id", user!.id).maybeSingle();
+      return data;
+    },
+  });
   const { muted, toggleMute } = useScuMute();
   const [ambient, setAmbient] = useState(false);
   const [hideSpoilers, setHideSpoilers] = useState(spoilersHidden);
@@ -158,7 +167,12 @@ export function SiteNav() {
           <EyeOff className="h-3.5 w-3.5" />
         </button>
         {user ? (
-          <button aria-label="Sign out" onClick={signOut} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"><LogOut className="h-3.5 w-3.5" /></button>
+          <>
+            <Link to="/profile" aria-label="Profile" title={profile?.display_name ?? "Profile"} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground">
+              <User className="h-3.5 w-3.5" />
+            </Link>
+            <button aria-label="Sign out" onClick={signOut} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"><LogOut className="h-3.5 w-3.5" /></button>
+          </>
         ) : (
           <Link to="/auth" className="whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">Sign in</Link>
         )}

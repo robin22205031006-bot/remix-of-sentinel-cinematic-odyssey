@@ -26,6 +26,7 @@ import { Route as AuthenticatedGraphRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIngestRouteImport } from './routes/_authenticated/ingest'
 import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
 import { Route as AuthenticatedOrgsRouteImport } from './routes/_authenticated/orgs'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedReaderRouteImport } from './routes/_authenticated/reader'
 import { Route as AuthenticatedSeriesRouteImport } from './routes/_authenticated/series'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
@@ -117,6 +118,11 @@ const AuthenticatedOrgsRoute = AuthenticatedOrgsRouteImport.update({
   path: '/orgs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReaderRoute = AuthenticatedReaderRouteImport.update({
   id: '/reader',
   path: '/reader',
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/ingest': typeof AuthenticatedIngestRoute
   '/map': typeof AuthenticatedMapRoute
   '/orgs': typeof AuthenticatedOrgsRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/reader': typeof AuthenticatedReaderRoute
   '/series': typeof AuthenticatedSeriesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/ingest': typeof AuthenticatedIngestRoute
   '/map': typeof AuthenticatedMapRoute
   '/orgs': typeof AuthenticatedOrgsRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/reader': typeof AuthenticatedReaderRoute
   '/series': typeof AuthenticatedSeriesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/_authenticated/ingest': typeof AuthenticatedIngestRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
   '/_authenticated/orgs': typeof AuthenticatedOrgsRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reader': typeof AuthenticatedReaderRoute
   '/_authenticated/series': typeof AuthenticatedSeriesRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/ingest'
     | '/map'
     | '/orgs'
+    | '/profile'
     | '/reader'
     | '/series'
     | '/timeline'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/ingest'
     | '/map'
     | '/orgs'
+    | '/profile'
     | '/reader'
     | '/series'
     | '/timeline'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ingest'
     | '/_authenticated/map'
     | '/_authenticated/orgs'
+    | '/_authenticated/profile'
     | '/_authenticated/reader'
     | '/_authenticated/series'
     | '/_authenticated/timeline'
@@ -418,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reader': {
       id: '/_authenticated/reader'
       path: '/reader'
@@ -468,6 +487,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIngestRoute: typeof AuthenticatedIngestRoute
   AuthenticatedMapRoute: typeof AuthenticatedMapRoute
   AuthenticatedOrgsRoute: typeof AuthenticatedOrgsRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReaderRoute: typeof AuthenticatedReaderRoute
   AuthenticatedSeriesRoute: typeof AuthenticatedSeriesRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
@@ -486,6 +506,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIngestRoute: AuthenticatedIngestRoute,
   AuthenticatedMapRoute: AuthenticatedMapRoute,
   AuthenticatedOrgsRoute: AuthenticatedOrgsRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReaderRoute: AuthenticatedReaderRoute,
   AuthenticatedSeriesRoute: AuthenticatedSeriesRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,

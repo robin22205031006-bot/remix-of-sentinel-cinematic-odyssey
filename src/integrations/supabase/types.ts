@@ -769,6 +769,7 @@ export type Database = {
       }
       is_banned: { Args: { _uid: string }; Returns: boolean }
       is_staff: { Args: { _uid: string }; Returns: boolean }
+      lookup_login_email: { Args: { p_username: string }; Returns: string }
       match_pdf_chunks: {
         Args: { match_count?: number; query_embedding: string }
         Returns: {

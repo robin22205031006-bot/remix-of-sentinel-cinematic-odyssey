@@ -48,6 +48,8 @@ function AuthPage() {
   const next = oauthReturnPath(rawNext);
   const hasNext = rawNext !== undefined && next !== "/";
   const [mode, setMode] = useState<"in" | "up">("in");
+  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -60,7 +62,21 @@ function AuthPage() {
     // Never leave the form spinning forever on a stalled network.
     const deadline = new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 10_000));
     if (mode === "in") {
-      const { error } = await Promise.race([supabase.auth.signInWithPassword({ email, password }), deadline]);
+      // Username-first: resolve username → email via the lookup RPC; "@" means email.
+      let loginEmail = identifier.trim();
+      if (!loginEmail.includes("@")) {
+        const { data: resolved, error: lookupErr } = await Promise.race([
+          supabase.rpc("lookup_login_email", { p_username: loginEmail }),
+          deadline,
+        ]);
+        if (lookupErr || !resolved) {
+          setBusy(false);
+          toast.error(lookupErr ? "Username lookup unavailable — sign in with your email." : "No account found for that username.");
+          return;
+        }
+        loginEmail = resolved as string;
+      }
+      const { error } = await Promise.race([supabase.auth.signInWithPassword({ email: loginEmail, password }), deadline]);
       setBusy(false);
       if (error) {
         toast.error(error.message);
@@ -69,11 +85,18 @@ function AuthPage() {
       if (hasNext) window.location.assign(next);
       else nav({ to: "/characters" });
     } else {
-      const { error } = await Promise.race([supabase.auth.signUp({ email, password, options: { emailRedirectTo: new URL("/auth", window.location.origin).href + (hasNext ? `?next=${encodeURIComponent(next)}` : "") } }), deadline]);
+      const { data: signUpData, error } = await Promise.race([supabase.auth.signUp({ email, password, options: { emailRedirectTo: new URL("/auth", window.location.origin).href + (hasNext ? `?next=${encodeURIComponent(next)}` : "") } }), deadline]);
       setBusy(false);
       if (error) {
         toast.error(error.message);
         return;
+      }
+      // Best-effort: stamp the username onto the profile (works when email confirmation is off).
+      const uname = username.trim();
+      const uid = signUpData.user?.id;
+      if (uname && uid) {
+        const { error: profErr } = await supabase.from("profiles").update({ display_name: uname }).eq("id", uid);
+        if (profErr) toast.message("Account created — set your username later in Profile.");
       }
       toast.success("Check your email to confirm your account.");
     }
@@ -88,8 +111,15 @@ function AuthPage() {
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5">
       <h1 className="text-4xl font-medium">{mode === "in" ? "Sign in" : "Create account"}</h1>
       <form onSubmit={submit} className="mt-8 grid gap-4">
-        <div className="grid gap-1.5"><Label>Email</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-        <div className="grid gap-1.5"><Label>Password</Label><Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+        {mode === "in" ? (
+          <div className="grid gap-1.5"><Label>Username or email</Label><Input required value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" /></div>
+        ) : (
+          <>
+            <div className="grid gap-1.5"><Label>Username</Label><Input required minLength={3} value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" /></div>
+            <div className="grid gap-1.5"><Label>Email</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>
+          </>
+        )}
+        <div className="grid gap-1.5"><Label>Password</Label><Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "in" ? "current-password" : "new-password"} /></div>
         <Button disabled={busy}>{busy ? "…" : mode === "in" ? "Sign in" : "Sign up"}</Button>
       </form>
       <button onClick={() => setMode(mode === "in" ? "up" : "in")} className="mt-4 text-sm text-muted-foreground hover:text-foreground">

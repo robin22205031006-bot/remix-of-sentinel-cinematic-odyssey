@@ -29,6 +29,8 @@ import { StatRadar } from "./stat-radar";
 import { CompareSentinel } from "./compare-sentinel";
 import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
 import { AbilityCardCanvas } from "./ability-canvas";
+import { isFavorite, toggleFavorite } from "@/lib/favorites";
+import { Heart } from "lucide-react";
 import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
 import { ABILITY_GROUP_LABELS, abilityDef, sortAbilities, type AbilityGroup } from "@/lib/abilities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -300,6 +302,16 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             )}
           </h3>
             <div className="flex items-center gap-1">
+              {e.kind === "character" && (
+                <button
+                  aria-label={isFavorite(e.id) ? "Remove favorite" : "Add favorite"}
+                  title={isFavorite(e.id) ? "Remove from favorites" : "Save to favorites"}
+                  onClick={() => { toggleFavorite({ id: e.id, name: e.name, kind: e.kind }); sfx.pop(); }}
+                  className={`grid h-8 w-8 place-items-center rounded-full ${isFavorite(e.id) ? "bg-accent/20 text-accent" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite(e.id) ? "fill-current" : ""}`} />
+                </button>
+              )}
               {e.kind === "character" && (
                 <button
                   aria-label="Compare sentinel"

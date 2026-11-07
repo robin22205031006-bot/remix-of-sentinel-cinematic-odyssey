@@ -120,8 +120,8 @@ export function FloatingNav() {
   };
 
   if (mode !== "hud" || navHidden) return null;
-  const items = [...TABS, { to: "#theme", label: "Theme" }] as const;
-  const spread = items.length > 8 ? 32 : 38;
+  const items = [...TABS, { to: "/profile", label: "Profile" }, { to: "#theme", label: "Theme" }] as const;
+  const spread = items.length > 8 ? 30 : 38;
   // Fan direction follows screen half so nodes never clip off-viewport.
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;

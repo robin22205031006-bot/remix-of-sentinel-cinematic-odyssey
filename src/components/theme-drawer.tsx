@@ -8,12 +8,12 @@ export function ThemeDrawer() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <button aria-label="Themes" className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-accent hover:glow-ring">
+        <button aria-label="Appearance" className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-accent hover:glow-ring">
           <Palette className="h-3.5 w-3.5" />
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
-        <SheetHeader><SheetTitle className="font-display text-2xl">Themes</SheetTitle></SheetHeader>
+        <SheetHeader><SheetTitle className="font-display text-2xl">Appearance</SheetTitle></SheetHeader>
         <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
           {THEMES.map((t, i) => (
             <button

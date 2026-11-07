@@ -31,6 +31,10 @@ export const THEMES: ThemePreset[] = [
   { id: "inferno", label: "Inferno · Ember Core", hue: 45, chroma: 0.2, glow: 25 },
   { id: "solid", label: "Solid · Carbon Ops", hue: 260, chroma: 0.004, glow: 260 },
   { id: "eyecare", label: "Eye Care · Warm Dossier", hue: 55, chroma: 0.09, glow: 45 },
+  { id: "forest", label: "Forest · Deep Canopy", hue: 150, chroma: 0.1, glow: 190 },
+  { id: "mint", label: "Mint · Cool Frost", hue: 175, chroma: 0.08, glow: 200 },
+  { id: "ivory", label: "Ivory · Parchment", hue: 85, chroma: 0.05, glow: 60 },
+  { id: "stone", label: "Stone · Slate Grey", hue: 220, chroma: 0.02, glow: 210 },
 ];
 
 export const DEFAULT_THEME = "blackops";

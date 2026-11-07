@@ -396,3 +396,70 @@ h1, h2, h3, h4 {
     box-shadow: 0 0 0 1px rgba(255,255,255,0.25) !important;
   }
 }
+
+/* ===== Appearance engine: card effects, density, radius, motion, focus ===== */
+
+:root {
+  --scu-card-radius: 16px;
+}
+
+/* Card corner radius applied to .glass surfaces */
+.glass { border-radius: var(--scu-card-radius); }
+.rounded-2xl.glass, .glass.rounded-2xl { border-radius: var(--scu-card-radius); }
+
+/* Density: relaxed adds breathing room, tight compresses gaps */
+:root[data-density] { }
+html { --scu-gap: 0.75rem; }
+:root { --scu-gap-mult: 1; }
+[data-density="relaxed"] { --scu-gap-mult: 1.35; }
+[data-density="tight"] { --scu-gap-mult: 0.7; }
+
+/* Card surface effects — scoped to .glass so dialogs/cards inherit */
+[data-cardfx="neumorphism"] .glass {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 6px 6px 14px rgba(0,0,0,.35), -6px -6px 14px rgba(255,255,255,.05);
+  backdrop-filter: none;
+}
+[data-cardfx="drop-shadow"] .glass {
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+}
+[data-cardfx="glow"] .glass {
+  box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 35%, transparent), 0 0 42px color-mix(in oklab, var(--accent) 14%, transparent);
+}
+[data-cardfx="outer-glow"] .glass {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent), 0 0 26px color-mix(in oklab, var(--accent) 30%, transparent);
+}
+[data-cardfx="gradient"] .glass {
+  background: linear-gradient(145deg, var(--card), color-mix(in oklab, var(--card) 70%, var(--accent)));
+}
+[data-cardfx="inner-shadow"] .glass {
+  box-shadow: inset 0 2px 10px rgba(0,0,0,.4);
+}
+[data-cardfx="bevel"] .glass {
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.18), inset -1px -1px 0 rgba(0,0,0,.5), 0 4px 14px rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.12);
+}
+[data-cardfx="satin"] .glass {
+  background: linear-gradient(115deg, var(--card) 30%, color-mix(in oklab, var(--card) 60%, #fff 12%) 50%, var(--card) 70%);
+}
+[data-cardfx="texture"] .glass {
+  background-image: radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* Motion on/off */
+[data-motion="off"] *, [data-motion="off"] *::before, [data-motion="off"] *::after {
+  animation-duration: 0.001s !important;
+  transition-duration: 0.001s !important;
+}
+
+/* Focus ring weight */
+[data-focus="bold"] :focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+[data-focus="soft"] :focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}

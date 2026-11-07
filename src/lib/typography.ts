@@ -22,15 +22,44 @@ export interface CustomFont {
   url: string;
 }
 
+export type CardEffect =
+  | "glass" | "neumorphism" | "drop-shadow" | "glow" | "gradient"
+  | "outer-glow" | "inner-shadow" | "bevel" | "satin" | "texture";
+
+export const CARD_EFFECTS: { id: CardEffect; label: string }[] = [
+  { id: "glass", label: "01. Glass Effect" },
+  { id: "neumorphism", label: "02. Neumorphism" },
+  { id: "drop-shadow", label: "03. Drop Shadow" },
+  { id: "glow", label: "04. Glow Effect" },
+  { id: "gradient", label: "05. Gradient Overlay" },
+  { id: "outer-glow", label: "06. Outer Glow" },
+  { id: "inner-shadow", label: "07. Inner Shadow" },
+  { id: "bevel", label: "08. Bevel & Emboss" },
+  { id: "satin", label: "09. Satin Effect" },
+  { id: "texture", label: "10. Texture Overlay" },
+];
+
+export type Density = "relaxed" | "standard" | "tight";
+
 export interface TypographySettings {
   bodyFont: string;
   displayFont: string;
   customFonts: CustomFont[];
-  /** Multiplier on the user's zoom level (0.9 – 1.15). */
+  /** Multiplier on the user's zoom level (0.85 – 1.5 → 10 visual steps). */
   baseScale: number;
   /** Font weight applied to h1–h4 headings (400–800). */
   headingWeight: number;
   sections: Record<SectionKey, SectionStyle>;
+  /** Card surface effect applied globally. */
+  cardEffect: CardEffect;
+  /** Card corner radius in px (4–16). */
+  cardRadius: number;
+  /** Layout density. */
+  density: Density;
+  /** Smooth UI animations on/off. */
+  smoothMotion: boolean;
+  /** Bold focus rings on interactive elements. */
+  boldFocus: boolean;
 }
 
 export const DEFAULT_TYPOGRAPHY: TypographySettings = {
@@ -45,6 +74,11 @@ export const DEFAULT_TYPOGRAPHY: TypographySettings = {
     series: {},
     timeline: {},
   },
+  cardEffect: "glass",
+  cardRadius: 16,
+  density: "standard",
+  smoothMotion: true,
+  boldFocus: true,
 };
 
 /** Curated tactical / sci-fi faces offered in the admin picker. */
@@ -104,8 +138,13 @@ export function applyTypography(s: TypographySettings): void {
   const displayStack = `"${s.displayFont}", ${SERIF_FALLBACK}`;
   root.style.setProperty("--font-sans", bodyStack);
   root.style.setProperty("--font-display", displayStack);
-  root.style.setProperty("--scu-base-scale", String(Math.min(1.15, Math.max(0.85, s.baseScale))));
-  root.style.setProperty("--scu-heading-weight", String(s.headingWeight));
+  root.style.setProperty("--scu-base-scale", String(Math.min(1.5, Math.max(0.8, s.baseScale ?? 1))));
+  root.style.setProperty("--scu-heading-weight", String(s.headingWeight ?? 500));
+  root.style.setProperty("--scu-card-radius", `${Math.min(16, Math.max(4, s.cardRadius ?? 16))}px`);
+  root.setAttribute("data-density", s.density ?? "standard");
+  root.setAttribute("data-cardfx", s.cardEffect ?? "glass");
+  root.setAttribute("data-motion", s.smoothMotion === false ? "off" : "on");
+  root.setAttribute("data-focus", s.boldFocus === false ? "soft" : "bold");
   for (const { key } of SECTION_KEYS) {
     const sec = s.sections[key];
     if (sec.text) root.style.setProperty(`--scu-sec-${key}-text`, sec.text);

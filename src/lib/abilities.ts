@@ -32,7 +32,7 @@ export const ABILITY_REGISTRY: AbilityDef[] = [
   { key: "omni_ergon", label: "Omni-Ergon", tier: "Mythic", group: "power", color: "#7dd3fc", icon: Sparkles, description: "Iridescent prism-shift command of all elements combined." },
 
   // ---- Legendary & cosmic arts ----
-  { key: "qahr_al_wujud", label: "Qahr al-Wujud", tier: "Legendary", group: "power", color: GOLD, icon: Crown, description: "Imperial gold order authority." },
+  { key: "qahr_al_wujud", label: "Qahr al-Wujud", tier: "Legendary", group: "power", color: GOLD, icon: Crown, description: "The Subjugation of Existence — Agnus imposes his will as the highest command; reality itself yields within his radius." },
   { key: "omni_argon", label: "Omni Argon", tier: "Legendary", group: "power", color: "#7dd3fc", icon: Sparkles, description: "All-elements combined, iridescent/cyan treatment." },
   { key: "reality_bend", label: "Reality Bend", tier: "Legendary", group: "power", color: "#dc2626", icon: Orbit, description: "Deep red/purple reality manipulation." },
   { key: "astrapo_electrokinesis", label: "Astrapo-Electrokinesis", tier: "Legendary", group: "power", color: "#3b82f6", icon: Zap, description: "Storm-forged lightning command." },

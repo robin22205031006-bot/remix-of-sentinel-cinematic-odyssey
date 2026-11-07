@@ -26,7 +26,12 @@ interface SeriesForm {
   timeline_note: string;
 }
 
-const GENRE_PRESETS = ["Superhero", "Sci-Fi", "Thriller", "Drama", "Action", "Horror", "Mystery", "Fantasy", "Cyberpunk", "Noir", "Mecha", "Urban Fantasy"];
+const GENRE_PRESETS = [
+  "Superhero", "Dark Superhero", "Sci-Fi", "Cyberpunk", "Thriller", "Drama", "Action",
+  "Horror", "Dark Fantasy", "Dark Mythic", "Mythical", "Mystery", "Fantasy", "Noir",
+  "Mecha", "Urban Fantasy", "Post-Apocalyptic", "Dystopian", "Psychological", "Crime",
+  "Supernatural", "Occult", "Martial Arts", "Espionage", "Military", "Survival",
+];
 const ROLE_SUGGESTIONS = ["Lead", "Antagonist", "Protagonist", "Debut", "Supporting", "Anti-hero", "Mentor", "Victim", "Survivor"];
 
 const EMPTY_FORM: SeriesForm = { title: "", description: "", cover_image_url: "", genres: [], season_count: "", season_names: "", timeline_note: "" };

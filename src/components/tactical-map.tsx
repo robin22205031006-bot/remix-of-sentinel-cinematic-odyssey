@@ -42,6 +42,9 @@ export function TacticalMap() {
   const [selected, setSelected] = useState<MapLocation | null>(null);
   const [editing, setEditing] = useState<MapLocation | "new" | null>(null);
   const [f, setF] = useState<PinForm>(EMPTY_PIN);
+  const [eraFilter, setEraFilter] = useState<string>("all");
+  const eras = [...new Set(pins.map((p) => p.era).filter((e): e is string => !!e && e.trim().length > 0))].sort();
+  const visiblePins = eraFilter === "all" ? pins : pins.filter((p) => p.era === eraFilter);
 
   const terrain = useMemo(
     () => [
@@ -152,7 +155,7 @@ export function TacticalMap() {
           ))}
 
           {/* pins */}
-          {pins.map((pin, i) => {
+          {visiblePins.map((pin, i) => {
             const x = (pin.pos_x / 100) * 100;
             const y = (pin.pos_y / 100) * 62.5;
             const active = selected?.id === pin.id;
@@ -206,6 +209,19 @@ export function TacticalMap() {
             <p className="text-sm text-muted-foreground">
               {isAdmin ? "No pins yet — add the first location." : "No locations charted yet."}
             </p>
+          </div>
+        )}
+        {eras.length > 0 && (
+          <div className="pointer-events-auto absolute bottom-3 left-3 flex max-w-[70%] flex-wrap gap-1.5">
+            {["all", ...eras].map((era) => (
+              <button
+                key={era}
+                onClick={() => setEraFilter(era)}
+                className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider backdrop-blur transition-colors ${eraFilter === era ? "bg-accent text-accent-foreground" : "bg-background/70 text-muted-foreground hover:text-foreground"}`}
+              >
+                {era === "all" ? "All eras" : era}
+              </button>
+            ))}
           </div>
         )}
       </div>

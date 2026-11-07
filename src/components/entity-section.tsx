@@ -367,6 +367,9 @@ export function EntitySection({
   const [deleting, setDeleting] = useState<Entity | null>(null);
   const [merging, setMerging] = useState<Entity | null>(null);
   const [cat, setCat] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    try { return localStorage.getItem("scu-card-view") === "list" ? "list" : "grid"; } catch { return "grid"; }
+  });
   const [q, setQ] = useState(initialQuery);
   useEffect(() => setQ(initialQuery), [initialQuery]);
 
@@ -451,6 +454,16 @@ export function EntitySection({
             {k === "all" ? "All" : k}
           </button>
         ))}
+        <span className="mx-1 w-px self-stretch bg-border" />
+        {([["grid", "Grid"], ["list", "List"]] as const).map(([v, label]) => (
+          <button
+            key={v}
+            onClick={() => { setViewMode(v); try { localStorage.setItem("scu-card-view", v); } catch { /* noop */ } }}
+            className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${viewMode === v ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (
@@ -458,7 +471,7 @@ export function EntitySection({
       ) : list.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">{data?.length ? "No matches." : "Nothing in the archive yet."}</p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={viewMode === "grid" ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3"}>
           <AnimatePresence initial={false}>
             {list.map((e, i) => (
               <motion.article

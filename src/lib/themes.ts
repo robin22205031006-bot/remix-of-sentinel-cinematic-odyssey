@@ -35,6 +35,21 @@ export const THEMES: ThemePreset[] = [
   { id: "mint", label: "Mint · Cool Frost", hue: 175, chroma: 0.08, glow: 200 },
   { id: "ivory", label: "Ivory · Parchment", hue: 85, chroma: 0.05, glow: 60 },
   { id: "stone", label: "Stone · Slate Grey", hue: 220, chroma: 0.02, glow: 210 },
+  // Jewel tones — metallic/satin finishes
+  { id: "ruby", label: "Jewel · Ruby", hue: 350, chroma: 0.16, glow: 350 },
+  { id: "emerald", label: "Jewel · Emerald", hue: 150, chroma: 0.15, glow: 160 },
+  { id: "sapphire", label: "Jewel · Sapphire", hue: 215, chroma: 0.14, glow: 220 },
+  { id: "gold", label: "Jewel · Gold", hue: 42, chroma: 0.13, glow: 45 },
+  { id: "bronze", label: "Jewel · Bronze", hue: 28, chroma: 0.1, glow: 30 },
+  { id: "onyx", label: "Jewel · Onyx", hue: 280, chroma: 0.05, glow: 280 },
+  { id: "pewter", label: "Jewel · Pewter", hue: 210, chroma: 0.03, glow: 200 },
+  { id: "opal", label: "Jewel · Rainbow Opal", hue: 200, chroma: 0.12, glow: 320 },
+  // Textured finishes (tint via hue/chroma)
+  { id: "brushed", label: "Texture · Brushed Metal", hue: 220, chroma: 0.04, glow: 210 },
+  { id: "grunge", label: "Texture · Distressed", hue: 30, chroma: 0.08, glow: 20 },
+  { id: "ink", label: "Texture · Manga Ink", hue: 0, chroma: 0.02, glow: 0 },
+  { id: "weave", label: "Texture · Woven", hue: 90, chroma: 0.06, glow: 80 },
+  { id: "fabric", label: "Texture · Fabric Relief", hue: 340, chroma: 0.07, glow: 330 },
 ];
 
 export const DEFAULT_THEME = "blackops";

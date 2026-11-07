@@ -12,6 +12,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { WifiOff } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteNav } from "@/components/site-nav";
+import { FloatingNav } from "@/components/floating-nav";
 import { AmbientField } from "@/components/ambient-field";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { AppearanceProvider } from "@/hooks/use-appearance";
@@ -201,6 +202,7 @@ function RootComponent() {
           <AmbientField />
           <ScrollProgress />
           <SiteNav />
+          <FloatingNav />
           {offline && (
             <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/90 px-4 py-2 text-xs font-medium text-amber-200 shadow-lg backdrop-blur-sm">
               <WifiOff className="h-3.5 w-3.5" />

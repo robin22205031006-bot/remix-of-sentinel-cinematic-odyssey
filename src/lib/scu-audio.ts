@@ -233,6 +233,14 @@ export const sfx = {
     });
   },
 
+  /** Comic ink swipe — papery noise burst with a falling pitch chirp (Mode C). */
+  comic() {
+    ready(() => {
+      noise({ dur: 0.09, vol: 0.05, freq: 1800, q: 0.8, type: "highpass" });
+      tone({ freq: 900, freqEnd: 300, type: "sawtooth", dur: 0.1, vol: 0.03 });
+    });
+  },
+
   /** Soft acoustic pop for ability badge / rarity filter taps. */
   pop() {
     ready(() => {

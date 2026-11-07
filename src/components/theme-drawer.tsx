@@ -1,6 +1,7 @@
 import { Palette } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAppearance } from "@/hooks/use-appearance";
+import { hudNavEnabled, setHudNav } from "@/components/floating-nav";
 import { THEMES } from "@/lib/themes";
 
 export function ThemeDrawer() {
@@ -34,6 +35,17 @@ export function ThemeDrawer() {
           <button className="rounded-full border px-3 py-1" onClick={() => zoom(-1)} aria-label="Zoom out">A−</button>
           <span className="w-8 text-center text-xs">{scaleIndex + 1}/6</span>
           <button className="rounded-full border px-3 py-1" onClick={() => zoom(1)} aria-label="Zoom in">A+</button>
+        </div>
+        <div className="flex items-center justify-between border-t border-border px-4 pb-6 pt-4 text-sm">
+          <span className="text-muted-foreground">Floating HUD menu</span>
+          <button
+            role="switch"
+            aria-checked={hudNavEnabled()}
+            onClick={() => setHudNav(!hudNavEnabled())}
+            className={`relative h-6 w-11 rounded-full transition-colors ${hudNavEnabled() ? "bg-accent" : "bg-secondary"}`}
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${hudNavEnabled() ? "left-[22px]" : "left-0.5"}`} />
+          </button>
         </div>
       </SheetContent>
     </Sheet>

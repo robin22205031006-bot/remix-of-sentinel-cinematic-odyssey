@@ -1,7 +1,7 @@
 import { Palette } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAppearance } from "@/hooks/use-appearance";
-import { hudNavEnabled, setHudNav } from "@/components/floating-nav";
+import { navMode, setNavMode, type NavMode } from "@/components/floating-nav";
 import { THEMES } from "@/lib/themes";
 
 export function ThemeDrawer() {
@@ -37,15 +37,18 @@ export function ThemeDrawer() {
           <button className="rounded-full border px-3 py-1" onClick={() => zoom(1)} aria-label="Zoom in">A+</button>
         </div>
         <div className="flex items-center justify-between border-t border-border px-4 pb-6 pt-4 text-sm">
-          <span className="text-muted-foreground">Floating HUD menu</span>
-          <button
-            role="switch"
-            aria-checked={hudNavEnabled()}
-            onClick={() => setHudNav(!hudNavEnabled())}
-            className={`relative h-6 w-11 rounded-full transition-colors ${hudNavEnabled() ? "bg-accent" : "bg-secondary"}`}
-          >
-            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${hudNavEnabled() ? "left-[22px]" : "left-0.5"}`} />
-          </button>
+          <span className="text-muted-foreground">Navigation mode</span>
+          <div className="flex gap-1.5">
+            {([["standard", "Header"], ["hud", "HUD"]] as [NavMode, string][]).map(([m, label]) => (
+              <button
+                key={m}
+                onClick={() => setNavMode(m)}
+                className={`rounded-full px-3 py-1 text-xs ${navMode() === m ? "bg-accent text-accent-foreground" : "border text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </SheetContent>
     </Sheet>

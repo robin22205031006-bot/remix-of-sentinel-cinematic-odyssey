@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { STAFF_TAB, TABS, tabIndex } from "@/lib/nav";
 import { ambientPlaying, ambientStart, ambientStop } from "@/lib/scu-audio";
 import { onSpoilerChange, setSpoilersHidden, spoilersHidden } from "@/lib/spoiler";
+import { useNavHidden } from "@/lib/nav-visibility";
+import { navMode } from "./floating-nav";
 import { DayNightToggle } from "./day-night-toggle";
 import { ThemeDrawer } from "./theme-drawer";
 import { UniversalSearch } from "./universal-search";
@@ -87,8 +89,20 @@ export function SiteNav() {
 
   const progress = tabs.length > 1 && active >= 0 ? (active / (tabs.length - 1)) * 100 : 0;
 
+  const autoHidden = useNavHidden();
+  const [hudMode, setHudMode] = useState(navMode() === "hud");
+  useEffect(() => {
+    const sync = () => setHudMode(navMode() === "hud");
+    window.addEventListener("scu-nav-mode", sync);
+    window.addEventListener("storage", sync);
+    return () => { window.removeEventListener("scu-nav-mode", sync); window.removeEventListener("storage", sync); };
+  }, []);
+
   return (
-    <nav className="fixed inset-x-0 top-3 z-40 flex flex-col items-center gap-1.5 px-2">
+    <nav
+      className={`fixed inset-x-0 top-3 z-40 flex flex-col items-center gap-1.5 px-2 transition-all duration-300 ease-in-out ${autoHidden || hudMode ? "pointer-events-none -translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"}`}
+      aria-hidden={autoHidden || hudMode ? true : undefined}
+    >
       <div className="glass glow-ring flex max-w-full items-center gap-0.5 rounded-full px-1.5 py-1.5">
         <div className="relative flex items-center overflow-x-auto [scrollbar-width:none]">
           <span

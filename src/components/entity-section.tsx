@@ -22,6 +22,7 @@ import { EntityGridSkeleton } from "./route-skeleton";
 import { EntityLinks } from "./entity-links";
 import { SeriesAppearances } from "./series-appearances";
 import { characterSeriesQuery } from "@/lib/series";
+import { setNavHidden } from "@/lib/nav-visibility";
 import { MergeEntityDialog } from "./merge-entity-dialog";
 import { SketchGallery } from "./sketch-gallery";
 import { StatRadar } from "./stat-radar";
@@ -197,6 +198,11 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, []);
+  // Hide all navigation while the dossier is open.
+  useEffect(() => {
+    setNavHidden(true);
+    return () => setNavHidden(false);
+  }, []);
 
   return (
     <motion.div

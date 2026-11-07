@@ -3,26 +3,40 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { TABS } from "@/lib/nav";
 import { sfx } from "@/lib/scu-audio";
+import { useNavHidden } from "@/lib/nav-visibility";
 
-const LS_KEY = "scu-hud-nav";
-export const hudNavEnabled = () => typeof window !== "undefined" && localStorage.getItem(LS_KEY) === "1";
-export const setHudNav = (on: boolean) => { try { localStorage.setItem(LS_KEY, on ? "1" : "0"); } catch { /* noop */ } window.dispatchEvent(new Event("scu-hud-nav")); };
+const LS_KEY = "scu-nav-mode";
+export type NavMode = "standard" | "hud";
+export const navMode = (): NavMode => {
+  if (typeof window === "undefined") return "standard";
+  const v = localStorage.getItem(LS_KEY);
+  if (v === "1") return "hud"; // legacy boolean
+  return v === "hud" ? "hud" : "standard";
+};
+export const setNavMode = (m: NavMode) => {
+  try { localStorage.setItem(LS_KEY, m); } catch { /* noop */ }
+  window.dispatchEvent(new Event("scu-nav-mode"));
+};
+// Back-compat helpers used by the Appearance drawer.
+export const hudNavEnabled = () => navMode() === "hud";
+export const setHudNav = (on: boolean) => setNavMode(on ? "hud" : "standard");
 
 /** Floating circular HUD menu — radial fan-out nav, toggled from Appearance. */
 export function FloatingNav() {
-  const [enabled, setEnabled] = useState(hudNavEnabled);
+  const [mode, setMode] = useState<NavMode>(navMode);
+  const navHidden = useNavHidden();
   const [open, setOpen] = useState(false);
   const nav = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    const sync = () => setEnabled(hudNavEnabled());
-    window.addEventListener("scu-hud-nav", sync);
+    const sync = () => setMode(navMode());
+    window.addEventListener("scu-nav-mode", sync);
     window.addEventListener("storage", sync);
-    return () => { window.removeEventListener("scu-hud-nav", sync); window.removeEventListener("storage", sync); };
+    return () => { window.removeEventListener("scu-nav-mode", sync); window.removeEventListener("storage", sync); };
   }, []);
 
-  if (!enabled) return null;
+  if (mode !== "hud" || navHidden) return null;
   const items = TABS;
   void nav; void pathname;
 

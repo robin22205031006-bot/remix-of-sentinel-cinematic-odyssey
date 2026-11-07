@@ -28,6 +28,7 @@ import { CompareSentinel } from "./compare-sentinel";
 import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
 import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
 import { ABILITY_GROUP_LABELS, abilityDef, sortAbilities, type AbilityGroup } from "@/lib/abilities";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { animationClass, tierDef } from "@/lib/character-tier";
 import { exportDossierPdf, type DossierGroup } from "@/lib/export-dossier";
 import { getCombatStats } from "@/lib/combat-stats";
@@ -120,6 +121,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
   const combat = e.kind === "character" ? getCombatStats(e.stats) : null;
   const [comparing, setComparing] = useState(false);
+  const [abilityInfo, setAbilityInfo] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [style, setStyle] = useState<CSSProperties>({});
   useEffect(() => {
@@ -267,7 +269,11 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                     <div key={g}>
                       <p className="mb-1 text-[10px] uppercase tracking-widest text-accent">{ABILITY_GROUP_LABELS[g]}</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {items.map((a) => <AbilityBadge key={a} name={a} />)}
+                        {items.map((a) => (
+                          <button key={a} onClick={() => { sfx.pop(); setAbilityInfo(a); }} className="cursor-pointer" title="Ability details">
+                            <AbilityBadge name={a} />
+                          </button>
+                        ))}
                       </div>
                     </div>
                   );
@@ -300,7 +306,44 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           )}
         </section>
       </div>
+      <AbilityInfoDialog name={abilityInfo} wielder={e.name} onClose={() => setAbilityInfo(null)} />
     </motion.div>
+  );
+}
+
+/** Dossier ability detail modal — description, assigned tier glow, usage context. */
+function AbilityInfoDialog({ name, wielder, onClose }: { name: string | null; wielder: string; onClose: () => void }) {
+  const def = name ? abilityDef(name) : null;
+  return (
+    <Dialog open={!!name} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        {def && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 font-display text-2xl">
+                <def.icon className="h-6 w-6" style={{ color: def.color }} />
+                {def.label}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-3 text-sm">
+              <div className="flex flex-wrap gap-2">
+                <AbilityBadge name={name!} />
+                <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">{ABILITY_GROUP_LABELS[def.group]}</span>
+                <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: def.color, borderColor: `${def.color}66`, background: `${def.color}14` }}>
+                  {def.tier} tier
+                </span>
+              </div>
+              {def.description && <p className="text-foreground/85">{def.description}</p>}
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Wielder:</span> {wielder}
+                {" — "}renders with the {def.tier === "Mythic" ? "animated red pulse" : def.tier === "Legendary" ? "gold aura" : `${def.tier} accent`} glow assigned to this character.
+              </p>
+              <p className="text-xs text-muted-foreground">Usage context is drawn from the official SCU registry entry — edit it from the Abilities Hub (admin).</p>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

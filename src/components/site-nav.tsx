@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { BookMarked, Bot, Castle, Clock, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Network, Shield, Sparkles, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Archive, BookMarked, Bot, Castle, Clock, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Network, Shield, Sparkles, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useIsStaff, useSession } from "@/hooks/use-admin";
 import { useScuMute } from "@/hooks/use-scu-audio";
@@ -11,7 +11,7 @@ import { DayNightToggle } from "./day-night-toggle";
 import { ThemeDrawer } from "./theme-drawer";
 import { UniversalSearch } from "./universal-search";
 
-const ICONS = { home: Home, orgs: Shield, chars: Users, abilities: WandSparkles, series: BookMarked, time: Clock, map: MapIcon, graph: Network, clans: Castle, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
+const ICONS = { home: Home, orgs: Shield, chars: Users, abilities: WandSparkles, archive: Archive, series: BookMarked, time: Clock, map: MapIcon, graph: Network, clans: Castle, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
 
 export function SiteNav() {
   const isStaff = useIsStaff();
@@ -21,7 +21,19 @@ export function SiteNav() {
   const qc = useQueryClient();
   const nav = useNavigate();
   const { pathname } = useLocation();
-  const tabs = useMemo(() => (isStaff ? [...TABS, STAFF_TAB] : [...TABS]), [isStaff]);
+  const { data: navHidden } = useQuery({
+    queryKey: ["app-settings", "nav_visibility"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "nav_visibility").maybeSingle();
+      return (data?.value ?? {}) as Record<string, boolean>;
+    },
+  });
+  const tabs = useMemo(() => {
+    const base = isStaff ? [...TABS, STAFF_TAB] : [...TABS];
+    const hidden = navHidden ?? {};
+    return base.filter((t) => hidden[t.to] ?? true);
+  }, [isStaff, navHidden]);
   const active = tabIndex(pathname, tabs);
   const refs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [pill, setPill] = useState({ left: 0, width: 0 });

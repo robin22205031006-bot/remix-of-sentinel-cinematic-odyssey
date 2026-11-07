@@ -16,8 +16,11 @@ export const Route = createFileRoute("/")({
 
 const sections = [
   { to: "/characters", n: "01", t: "Characters", d: "Dossiers of every sentinel, ally and adversary." },
-  { to: "/orgs", n: "02", t: "Orgs & Bloodlines", d: "Orders, clans, factions and lineages." },
-  { to: "/timeline", n: "03", t: "Timeline", d: "The history of the universe, in order." },
+  { to: "/abilities", n: "02", t: "Abilities", d: "The master registry of powers, tiers and who wields them." },
+  { to: "/series", n: "03", t: "Series", d: "Story arcs, episodes and where every character appears." },
+  { to: "/archive", n: "04", t: "Archive", d: "Orgs, clans, graph and the full canon timeline." },
+  { to: "/orgs", n: "05", t: "Orgs & Bloodlines", d: "Orders, clans, factions and lineages." },
+  { to: "/timeline", n: "06", t: "Timeline", d: "The history of the universe, in order." },
 ] as const;
 
 function Index() {

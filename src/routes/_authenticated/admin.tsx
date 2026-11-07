@@ -14,6 +14,7 @@ import { syncLoreExport } from "@/lib/ingest.functions";
 import { AdminEpisodes } from "@/components/admin-episodes";
 import { AdminSeries } from "@/components/admin-series";
 import { AdminTypography } from "@/components/admin-typography";
+import { AdminNavVisibility } from "@/components/admin-nav-visibility";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -233,6 +234,7 @@ function Admin() {
 
       {isAdmin && <AdminSeries />}
       {isAdmin && <AdminTypography />}
+      {isAdmin && <AdminNavVisibility />}
       {isAdmin && <AdminEpisodes />}
 
       <section className="glass rounded-2xl p-5">

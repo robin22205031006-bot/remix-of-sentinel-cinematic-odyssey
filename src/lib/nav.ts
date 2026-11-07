@@ -4,6 +4,7 @@ export const TABS = [
   { to: "/clans", label: "Clans", icon: "clans" },
   { to: "/characters", label: "Characters", icon: "chars" },
   { to: "/abilities", label: "Abilities", icon: "abilities" },
+  { to: "/archive", label: "Archive", icon: "archive" },
   { to: "/series", label: "Series", icon: "series" },
   { to: "/timeline", label: "Timeline", icon: "time" },
   { to: "/map", label: "Map", icon: "map" },

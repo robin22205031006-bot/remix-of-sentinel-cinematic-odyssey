@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BookMarked, FileText, Search, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { seriesQuery, seriesByIdQuery, seriesCharactersQuery, seriesMembersQuery, seriesStatusClass, type SeriesCharacter } from "@/lib/series";
+import { seriesQuery, seriesByIdQuery, seriesCharactersQuery, seriesMembersQuery, seriesStatusClass, type Series, type SeriesCharacter } from "@/lib/series";
 import { episodesQuery } from "@/lib/map";
 import { useSectionStyle } from "@/hooks/use-typography";
 import type { Entity } from "@/lib/entities";
@@ -116,6 +116,46 @@ function SeriesDetail({ seriesId, onClose }: { seriesId: string; onClose: () => 
   );
 }
 
+/** Cinematic hero carousel — full-bleed cover art, bold titles, metadata chips. */
+function SeriesHero({ series, counts, onOpen }: { series: Series[]; counts: Map<string, number>; onOpen: (id: string) => void }) {
+  if (series.length === 0) return null;
+  return (
+    <div className="mb-8">
+      <p className="mb-3 text-[11px] uppercase tracking-[0.3em] text-accent">Now streaming</p>
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {series.map((s, i) => (
+          <button
+            key={s.id}
+            onClick={() => onOpen(s.id)}
+            className="group relative w-[85vw] max-w-md shrink-0 snap-center overflow-hidden rounded-3xl text-left sm:w-[28rem]"
+            style={{ minHeight: "16rem" }}
+          >
+            {s.cover_image_url ? (
+              <img src={s.cover_image_url} alt={s.title} loading={i === 0 ? "eager" : "lazy"} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-secondary via-background to-accent/20" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
+            <div className="relative flex h-full min-h-[16rem] flex-col justify-end p-6">
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                <span className="rounded-full border border-white/25 bg-black/50 px-2.5 py-0.5 text-[10px] uppercase tracking-widest text-white/90 backdrop-blur">SCU Canon</span>
+                <span className="rounded-full border border-white/25 bg-black/50 px-2.5 py-0.5 text-[10px] uppercase tracking-widest text-white/90 backdrop-blur">
+                  {counts.get(s.id) ?? 0} character{(counts.get(s.id) ?? 0) === 1 ? "" : "s"}
+                </span>
+              </div>
+              <h2 className="font-display text-4xl font-bold leading-tight text-white drop-shadow-lg sm:text-5xl">{s.title}</h2>
+              {s.description && <p className="mt-2 line-clamp-2 max-w-md text-sm text-white/80">{s.description}</p>}
+              <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
+                ▶ Open saga
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SeriesPage() {
   const { s } = Route.useSearch();
   const sectionStyle = useSectionStyle("series");
@@ -159,6 +199,8 @@ export function SeriesPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search series…" className="glass h-11 rounded-full pl-10" />
       </div>
+
+      {!q.trim() && <SeriesHero series={list.slice(0, 8)} counts={counts} onOpen={(id) => navigate({ search: { s: id } })} />}
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

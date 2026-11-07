@@ -16,6 +16,7 @@ import { AdminSeries } from "@/components/admin-series";
 import { AdminTypography } from "@/components/admin-typography";
 import { AdminNavVisibility } from "@/components/admin-nav-visibility";
 import { AdminAppearance } from "@/components/admin-appearance";
+import { AdminAudio } from "@/components/admin-audio";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -236,6 +237,7 @@ function Admin() {
       {isAdmin && <AdminSeries />}
       {isAdmin && <AdminTypography />}
       {isAdmin && <AdminAppearance />}
+      {isAdmin && <AdminAudio />}
       {isAdmin && <AdminNavVisibility />}
       {isAdmin && <AdminEpisodes />}
 

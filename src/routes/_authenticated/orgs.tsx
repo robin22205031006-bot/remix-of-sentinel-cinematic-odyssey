@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/orgs")({
   component: Orgs,
 });
 
-function Orgs() {
+export function Orgs() {
   const { q, open } = Route.useSearch();
   return (
     <EntitySection kinds={["organization", "clan", "bloodline", "faction"]} categories={GROUP_CATEGORIES} initialQuery={q ?? ""} openId={open} view="organizations"

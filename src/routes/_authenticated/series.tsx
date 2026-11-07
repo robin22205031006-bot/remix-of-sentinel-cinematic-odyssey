@@ -116,7 +116,7 @@ function SeriesDetail({ seriesId, onClose }: { seriesId: string; onClose: () => 
   );
 }
 
-function SeriesPage() {
+export function SeriesPage() {
   const { s } = Route.useSearch();
   const sectionStyle = useSectionStyle("series");
   const navigate = Route.useNavigate();

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SeriesPage } from "./_authenticated/series";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,6 +39,9 @@ function Index() {
             <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
           </Link>
         ))}
+      </div>
+      <div className="mt-16">
+        <SeriesPage />
       </div>
     </main>
   );

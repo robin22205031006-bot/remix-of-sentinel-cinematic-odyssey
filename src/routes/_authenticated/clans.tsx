@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/clans")({
   component: Clans,
 });
 
-function Clans() {
+export function Clans() {
   return (
     <main className="mx-auto max-w-6xl px-4 pb-24 pt-28 sm:px-5">
       <header className="mb-8">

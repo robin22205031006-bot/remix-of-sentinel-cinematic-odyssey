@@ -42,7 +42,7 @@ const EMPTY_FORM = { title: "", era: "", series: "", impact: 5, description: "" 
 
 type EventForm = typeof EMPTY_FORM;
 
-function Timeline() {
+export function Timeline() {
   const isAdmin = useIsAdmin();
   const sectionStyle = useSectionStyle("timeline");
   const qc = useQueryClient();

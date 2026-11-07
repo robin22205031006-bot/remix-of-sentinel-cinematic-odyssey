@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,26 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  // Swipe right anywhere on the auth screen returns to the app.
+  useEffect(() => {
+    const start = (e: TouchEvent) => {
+      const t = e.touches[0];
+      touchStart.current = t ? { x: t.clientX, y: t.clientY } : null;
+    };
+    const end = (e: TouchEvent) => {
+      const s = touchStart.current;
+      touchStart.current = null;
+      const t = e.changedTouches[0];
+      if (!s || !t) return;
+      const dx = t.clientX - s.x;
+      const dy = t.clientY - s.y;
+      if (dx > 90 && Math.abs(dx) > Math.abs(dy) * 1.5) nav({ to: "/" });
+    };
+    window.addEventListener("touchstart", start, { passive: true });
+    window.addEventListener("touchend", end, { passive: true });
+    return () => { window.removeEventListener("touchstart", start); window.removeEventListener("touchend", end); };
+  }, [nav]);
   const { next: rawNext } = Route.useSearch();
   const next = oauthReturnPath(rawNext);
   const hasNext = rawNext !== undefined && next !== "/";

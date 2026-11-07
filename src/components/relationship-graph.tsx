@@ -28,19 +28,33 @@ const KIND_LABEL: Record<Entity["kind"], string> = {
 const W = 1000;
 const H = 640;
 
-/** Deterministic golden-angle spiral so the layout is stable between renders. */
+const KIND_ORDER: Entity["kind"][] = ["character", "organization", "clan", "bloodline", "faction"];
+
+/** Sector layout: each entity kind gets its own wedge, nodes spiral outward by degree. */
 function layoutPositions(nodes: Entity[]) {
-  const sorted = [...nodes].sort((a, b) => a.name.localeCompare(b.name));
   const cx = W / 2;
   const cy = H / 2;
   const maxR = Math.min(W, H) / 2 - 70;
-  return new Map(
-    sorted.map((e, i) => {
-      const angle = i * 2.399963;
-      const r = 30 + Math.sqrt(i + 1) * (maxR / Math.sqrt(sorted.length));
-      return [e.id, { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r * 0.82 }];
-    }),
-  );
+  const byKind = new Map<Entity["kind"], Entity[]>();
+  for (const e of nodes) {
+    const arr = byKind.get(e.kind) ?? [];
+    arr.push(e);
+    byKind.set(e.kind, arr);
+  }
+  const kindsPresent = KIND_ORDER.filter((k) => byKind.has(k));
+  const pos = new Map<string, { x: number; y: number }>();
+  kindsPresent.forEach((k, ki) => {
+    const list = [...byKind.get(k)!].sort((a, b) => a.name.localeCompare(b.name));
+    const sector = (Math.PI * 2) / kindsPresent.length;
+    const start = -Math.PI / 2 + ki * sector;
+    list.forEach((e, i) => {
+      const t = list.length === 1 ? 0.5 : (i + 0.5) / list.length;
+      const angle = start + t * sector * 0.92;
+      const r = 36 + Math.sqrt(i + 1) * (maxR / Math.sqrt(Math.max(list.length, 4)));
+      pos.set(e.id, { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r * 0.85 });
+    });
+  });
+  return pos;
 }
 
 export function RelationshipGraph() {
@@ -48,6 +62,7 @@ export function RelationshipGraph() {
   const [kinds, setKinds] = useState<Set<Entity["kind"]>>(new Set(ALL_KINDS));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [zoom, setZoom] = useState(1);
 
   const { data: entities, isLoading } = useQuery({ ...entitiesQuery(ALL_KINDS), staleTime: 60_000 });
   const { data: memberships } = useQuery({
@@ -139,7 +154,7 @@ export function RelationshipGraph() {
           <PanelSkeleton className="h-[70vh]" />
         ) : (
         <div className="glass overflow-hidden rounded-2xl">
-          <svg viewBox={`0 0 ${W} ${H}`} className="block h-[70vh] w-full" role="img" aria-label="Entity relationship graph">
+          <svg viewBox={`${W / 2 - W / (2 * zoom)} ${H / 2 - H / (2 * zoom)} ${W / zoom} ${H / zoom}`} className="block h-[70vh] w-full" role="img" aria-label="Entity relationship graph">
             {/* Edges */}
             {edges.map((m) => {
               const a = positions.get(m.character_id);
@@ -196,6 +211,13 @@ export function RelationshipGraph() {
           </svg>
         </div>
         )}
+
+        {/* zoom controls */}
+        <div className="absolute bottom-3 right-3 z-10 flex gap-1.5">
+          <button aria-label="Zoom out" onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.2).toFixed(2)))} className="grid h-8 w-8 place-items-center rounded-full bg-secondary/90 text-sm font-bold hover:text-foreground">−</button>
+          <button aria-label="Reset zoom" onClick={() => setZoom(1)} className="grid h-8 w-8 place-items-center rounded-full bg-secondary/90 text-[10px] font-bold hover:text-foreground">{Math.round(zoom * 100)}%</button>
+          <button aria-label="Zoom in" onClick={() => setZoom((z) => Math.min(3, +(z + 0.2).toFixed(2)))} className="grid h-8 w-8 place-items-center rounded-full bg-secondary/90 text-sm font-bold hover:text-foreground">+</button>
+        </div>
 
         {/* Selection panel */}
         {selected && (

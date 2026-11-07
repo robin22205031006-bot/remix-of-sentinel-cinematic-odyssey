@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { BookMarked, Bot, Castle, Clock, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Network, Shield, Sparkles, Users, Volume2, VolumeX, ZoomIn, ZoomOut } from "lucide-react";
+import { BookMarked, Bot, Castle, Clock, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Network, Shield, Sparkles, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useIsStaff, useSession } from "@/hooks/use-admin";
 import { useScuMute } from "@/hooks/use-scu-audio";
@@ -11,7 +11,7 @@ import { DayNightToggle } from "./day-night-toggle";
 import { ThemeDrawer } from "./theme-drawer";
 import { UniversalSearch } from "./universal-search";
 
-const ICONS = { home: Home, orgs: Shield, chars: Users, series: BookMarked, time: Clock, map: MapIcon, graph: Network, clans: Castle, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
+const ICONS = { home: Home, orgs: Shield, chars: Users, abilities: WandSparkles, series: BookMarked, time: Clock, map: MapIcon, graph: Network, clans: Castle, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
 
 export function SiteNav() {
   const isStaff = useIsStaff();

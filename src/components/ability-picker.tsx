@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   ABILITY_GROUP_LABELS,
-  ABILITY_REGISTRY,
+  allAbilityDefs,
   abilityDef,
   normalizeAbilityKey,
   sortAbilities,
@@ -30,7 +30,7 @@ export function AbilityPicker({
 
   const suggestions = useMemo(() => {
     const chosen = new Set(value.map(normalizeAbilityKey));
-    return ABILITY_REGISTRY.filter(
+    return allAbilityDefs().filter(
       (a) =>
         !chosen.has(a.key) &&
         (!needle ||

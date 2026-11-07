@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as InstallRouteImport } from './routes/install'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedAbilitiesRouteImport } from './routes/_authenticated/abilities'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
@@ -60,6 +61,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAbilitiesRoute = AuthenticatedAbilitiesRouteImport.update({
+  id: '/abilities',
+  path: '/abilities',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/install': typeof InstallRoute
   '/mcp': typeof McpRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/abilities': typeof AuthenticatedAbilitiesRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/ai': typeof AuthenticatedAiRoute
   '/characters': typeof AuthenticatedCharactersRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/install': typeof InstallRoute
   '/mcp': typeof McpRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/abilities': typeof AuthenticatedAbilitiesRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/ai': typeof AuthenticatedAiRoute
   '/characters': typeof AuthenticatedCharactersRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/install': typeof InstallRoute
   '/mcp': typeof McpRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/_authenticated/abilities': typeof AuthenticatedAbilitiesRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/install'
     | '/mcp'
     | '/.well-known/oauth-protected-resource'
+    | '/abilities'
     | '/admin'
     | '/ai'
     | '/characters'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/install'
     | '/mcp'
     | '/.well-known/oauth-protected-resource'
+    | '/abilities'
     | '/admin'
     | '/ai'
     | '/characters'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/install'
     | '/mcp'
     | '/.well-known/oauth-protected-resource'
+    | '/_authenticated/abilities'
     | '/_authenticated/admin'
     | '/_authenticated/ai'
     | '/_authenticated/characters'
@@ -316,6 +328,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/abilities': {
+      id: '/_authenticated/abilities'
+      path: '/abilities'
+      fullPath: '/abilities'
+      preLoaderRoute: typeof AuthenticatedAbilitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
@@ -419,6 +438,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAbilitiesRoute: typeof AuthenticatedAbilitiesRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAiRoute: typeof AuthenticatedAiRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
@@ -435,6 +455,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAbilitiesRoute: AuthenticatedAbilitiesRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAiRoute: AuthenticatedAiRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,

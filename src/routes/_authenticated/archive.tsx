@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Castle, Clock, Network, Shield } from "lucide-react";
 import { RelationshipGraph } from "@/components/relationship-graph";
+import { SectionBoundary } from "@/components/section-boundary";
 import { Orgs } from "./orgs";
 import { Clans } from "./clans";
 import { Timeline } from "./timeline";
@@ -54,14 +55,16 @@ function Archive() {
       </div>
 
       <section aria-label={active.t}>
-        {module === "orgs" && <Orgs />}
-        {module === "clans" && <Clans />}
-        {module === "graph" && (
-          <div className="glass rounded-2xl p-4">
-            <RelationshipGraph />
-          </div>
-        )}
-        {module === "timeline" && <Timeline />}
+        <SectionBoundary key={module} label={active.t}>
+          {module === "orgs" && <Orgs />}
+          {module === "clans" && <Clans />}
+          {module === "graph" && (
+            <div className="glass rounded-2xl p-4">
+              <RelationshipGraph />
+            </div>
+          )}
+          {module === "timeline" && <Timeline />}
+        </SectionBoundary>
       </section>
     </main>
   );

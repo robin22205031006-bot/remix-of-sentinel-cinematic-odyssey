@@ -44,7 +44,7 @@ function layoutPositions(nodes: Entity[]) {
   const kindsPresent = KIND_ORDER.filter((k) => byKind.has(k));
   const pos = new Map<string, { x: number; y: number }>();
   kindsPresent.forEach((k, ki) => {
-    const list = [...byKind.get(k)!].sort((a, b) => a.name.localeCompare(b.name));
+    const list = [...(byKind.get(k) ?? [])].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
     const sector = (Math.PI * 2) / kindsPresent.length;
     const start = -Math.PI / 2 + ki * sector;
     list.forEach((e, i) => {
@@ -203,7 +203,7 @@ export function RelationshipGraph() {
                     fill="var(--muted-foreground)"
                     style={{ pointerEvents: "none", paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
                   >
-                    {e.name.length > 22 ? `${e.name.slice(0, 21)}…` : e.name}
+                    {(e.name ?? "").length > 22 ? `${(e.name ?? "").slice(0, 21)}…` : (e.name ?? "")}
                   </text>
                 </g>
               );

@@ -7,7 +7,7 @@ import { useScuMute } from "@/hooks/use-scu-audio";
 import { useAppearance } from "@/hooks/use-appearance";
 import { supabase } from "@/integrations/supabase/client";
 import { STAFF_TAB, TABS, tabIndex } from "@/lib/nav";
-import { ambientPlaying, ambientStart, ambientStop } from "@/lib/scu-audio";
+import { ambientPlaying, ambientStart, ambientStop, onMuteChange, setAudioFiles, setMuted } from "@/lib/scu-audio";
 import { onSpoilerChange, setSpoilersHidden, spoilersHidden } from "@/lib/spoiler";
 import { useNavHidden } from "@/lib/nav-visibility";
 import { navMode } from "./floating-nav";
@@ -27,6 +27,17 @@ export function SiteNav() {
     queryFn: async () => {
       const { data } = await supabase.from("profiles").select("display_name").eq("id", user!.id).maybeSingle();
       return data;
+    },
+  });
+  // Load admin-uploaded audio clips once for the session.
+  useQuery({
+    queryKey: ["app-settings", "audio_settings"],
+    staleTime: 300_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "audio_settings").maybeSingle();
+      const files = (data?.value as { files?: Record<string, string> } | null)?.files;
+      setAudioFiles(files);
+      return files ?? null;
     },
   });
   const { muted, toggleMute } = useScuMute();

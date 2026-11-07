@@ -20,6 +20,7 @@ import { TypographyProvider } from "@/hooks/use-typography";
 import { supabase } from "@/integrations/supabase/client";
 import { syncSessionCache } from "@/lib/session-cache";
 import { useScuAudioGlobal } from "@/hooks/use-scu-audio";
+import { playWelcome } from "@/lib/scu-audio";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 import appCss from "../styles.css?url";
@@ -180,6 +181,7 @@ function RootComponent() {
         if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
       });
       if (event === "SIGNED_IN" && session) {
+        setTimeout(() => playWelcome(), 400);
         const key = `scu-logged-${session.user.id}-${new Date().toDateString()}`;
         try {
           if (!sessionStorage.getItem(key)) {

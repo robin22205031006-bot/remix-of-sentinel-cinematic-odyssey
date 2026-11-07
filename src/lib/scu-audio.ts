@@ -107,15 +107,59 @@ function ready(fn: () => void): void {
   }
 }
 
+// ---- Admin-uploaded audio files (data URLs persisted in app_settings) ----
+let audioFiles: Record<string, string> = {};
+let ambientFileAudio: HTMLAudioElement | null = null;
+
+export function setAudioFiles(map: Record<string, string> | null | undefined) {
+  audioFiles = map ?? {};
+  if (ambientFileAudio && !audioFiles["ambient"]) { ambientFileAudio.pause(); ambientFileAudio = null; }
+}
+
+/** Play an uploaded file by key ("welcome", "ambient", "sfx:click", …). Returns true if played. */
+export function playAudioFile(key: string, loop = false): boolean {
+  const url = audioFiles[key];
+  if (!url || isMuted()) return false;
+  try {
+    const a = new Audio(url);
+    a.loop = loop;
+    a.volume = 0.8;
+    void a.play().catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Post-login welcome track — uploaded file wins, else synthesized boot tone. */
+export function playWelcome() {
+  if (playAudioFile("welcome")) return;
+  sfx.welcome();
+}
+
+/** SFX override check — call at the top of each synth preset. */
+function fileOverride(key: string): boolean {
+  return playAudioFile(`sfx:${key}`);
+}
+
 // ---- Ambient drone (low-pitch background atmosphere) ----
 let ambientNodes: { osc: OscillatorNode; gain: GainNode }[] | null = null;
 
 export function ambientPlaying(): boolean {
-  return ambientNodes !== null;
+  return ambientNodes !== null || ambientFileAudio !== null;
 }
 
 export function ambientStart() {
-  if (ambientNodes || isMuted()) return;
+  if (ambientNodes || ambientFileAudio || isMuted()) return;
+  if (audioFiles["ambient"]) {
+    try {
+      ambientFileAudio = new Audio(audioFiles["ambient"]);
+      ambientFileAudio.loop = true;
+      ambientFileAudio.volume = 0.5;
+      void ambientFileAudio.play().catch(() => { ambientFileAudio = null; });
+      return;
+    } catch { /* fall through to synth */ }
+  }
   const c = ac();
   if (!c) return;
   try {
@@ -150,6 +194,7 @@ export function ambientStart() {
 }
 
 export function ambientStop() {
+  if (ambientFileAudio) { ambientFileAudio.pause(); ambientFileAudio = null; }
   if (!ambientNodes) return;
   const c = ctx;
   for (const n of ambientNodes) {
@@ -164,6 +209,7 @@ export function ambientStop() {
 export const sfx = {
   /** Subtle tactical tick for buttons, tabs, and generic presses. */
   click() {
+    if (fileOverride("click")) return;
     ready(() => {
       tone({ freq: 1900, freqEnd: 1400, type: "square", dur: 0.025, vol: 0.025 });
       noise({ dur: 0.015, vol: 0.012, freq: 5000, q: 2 });
@@ -172,6 +218,7 @@ export const sfx = {
 
   /** Rising confirmation blip for creates/adds. */
   add() {
+    if (fileOverride("add")) return;
     ready(() => {
       tone({ freq: 520, freqEnd: 880, type: "triangle", dur: 0.09, vol: 0.06 });
       tone({ freq: 1040, freqEnd: 1560, type: "sine", dur: 0.1, vol: 0.045, delay: 0.06 });
@@ -180,6 +227,7 @@ export const sfx = {
 
   /** Descending tech hum for deletes/removals. */
   remove() {
+    if (fileOverride("remove")) return;
     ready(() => {
       tone({ freq: 220, freqEnd: 70, type: "sawtooth", dur: 0.22, vol: 0.045 });
       noise({ dur: 0.12, vol: 0.03, freq: 900, q: 0.8, type: "lowpass" });
@@ -188,6 +236,7 @@ export const sfx = {
 
   /** Layered digital convergence for entity merges. */
   merge() {
+    if (fileOverride("merge")) return;
     ready(() => {
       tone({ freq: 300, freqEnd: 1200, type: "sine", dur: 0.28, vol: 0.05 });
       tone({ freq: 450, freqEnd: 1800, type: "triangle", dur: 0.24, vol: 0.035, delay: 0.05 });
@@ -198,6 +247,7 @@ export const sfx = {
 
   /** Air-sweep whoosh for card swipes, drawer opens and transitions. */
   whoosh() {
+    if (fileOverride("whoosh")) return;
     ready(() => {
       noise({ dur: 0.22, vol: 0.05, freq: 1200, q: 0.7, type: "bandpass" });
       noise({ dur: 0.16, vol: 0.03, freq: 2600, q: 1.4, delay: 0.03 });
@@ -207,6 +257,7 @@ export const sfx = {
 
   /** Celestial harp-ish chime for Angle (Angel) tier reveals. */
   angel() {
+    if (fileOverride("angel")) return;
     ready(() => {
       [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
         tone({ freq: f, type: "sine", dur: 0.7, vol: 0.04, delay: i * 0.07, attack: 0.01 }),
@@ -217,6 +268,7 @@ export const sfx = {
 
   /** Deep crimson energy pulse for Mythic tier reveals. */
   mythic() {
+    if (fileOverride("mythic")) return;
     ready(() => {
       tone({ freq: 55, freqEnd: 38, type: "sawtooth", dur: 0.7, vol: 0.06, attack: 0.02 });
       tone({ freq: 110, freqEnd: 55, type: "square", dur: 0.5, vol: 0.035, delay: 0.05 });
@@ -227,6 +279,7 @@ export const sfx = {
 
   /** Futuristic HUD blip for Legendary/Guardian/Heroic and generic UI pops. */
   hud() {
+    if (fileOverride("hud")) return;
     ready(() => {
       tone({ freq: 1400, freqEnd: 2100, type: "square", dur: 0.05, vol: 0.03 });
       tone({ freq: 700, type: "sine", dur: 0.08, vol: 0.025, delay: 0.04 });
@@ -235,6 +288,7 @@ export const sfx = {
 
   /** Comic ink swipe — papery noise burst with a falling pitch chirp (Mode C). */
   comic() {
+    if (fileOverride("comic")) return;
     ready(() => {
       noise({ dur: 0.09, vol: 0.05, freq: 1800, q: 0.8, type: "highpass" });
       tone({ freq: 900, freqEnd: 300, type: "sawtooth", dur: 0.1, vol: 0.03 });
@@ -243,6 +297,7 @@ export const sfx = {
 
   /** Soft acoustic pop for ability badge / rarity filter taps. */
   pop() {
+    if (fileOverride("pop")) return;
     ready(() => {
       tone({ freq: 660, freqEnd: 990, type: "triangle", dur: 0.07, vol: 0.05 });
       noise({ dur: 0.03, vol: 0.02, freq: 4000, q: 2 });

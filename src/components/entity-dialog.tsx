@@ -266,12 +266,25 @@ export function EntityDialog({
                 </select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Theme song URL</Label>
-                <Input
-                  value={form.theme_song_url}
-                  onChange={(e) => setForm({ ...form, theme_song_url: e.target.value })}
-                  placeholder="https://…/theme.mp3"
-                />
+                <Label>Theme song</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={form.theme_song_url}
+                    onChange={(e) => setForm({ ...form, theme_song_url: e.target.value })}
+                    placeholder="https://…/theme.mp3"
+                  />
+                  <Input type="file" accept="audio/*" className="w-36 text-xs" onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    try {
+                      const dataUrl = await fileToDataUrl(file);
+                      setForm((c) => ({ ...c, theme_song_url: dataUrl }));
+                      toast.success(`Attached "${file.name}" as theme song.`);
+                    } catch { toast.error("This audio file could not be processed."); }
+                  }} />
+                </div>
+                <p className="text-xs text-muted-foreground">URL or upload an audio file — plays from the card &amp; dossier.</p>
               </div>
             </div>
           )}

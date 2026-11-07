@@ -84,7 +84,7 @@
     "source": "clarifications.pdf"
   },
   {
-    "existing_name": "Ethan",
+    "existing_name": "Ethan Thorne",
     "new_facts": "Ethan learns to accept darkness without becoming it in S5.",
     "status": "Alive",
     "quote": "Ethan learns to accept darkness without becoming it",
@@ -119,7 +119,7 @@
     "source": "corvani and orion things.pdf"
   },
   {
-    "existing_name": "Ethan",
+    "existing_name": "Ethan Thorne",
     "new_facts": "After being brutally tortured and manarished without food for days in a secret island prison cell on the 5th floor, Ethan turned into Elizah, punched through the wall, and fell into the ocean where a whale sent by Corvani saved him.",
     "status": "Alive",
     "quote": "when finally in the cell ethan turns into elizah and breaks the cell with his punch,but he was manarished as he didn't eat for several days and he was tortured brutally for so many days",
@@ -217,7 +217,7 @@
     "source": "Elizah,nyxia,samuel.pdf"
   },
   {
-    "existing_name": "Ethan",
+    "existing_name": "Ethan Thorne",
     "new_facts": "Ethan has two personalities, the other being Elizah. He was bullied from childhood due to abnormal behavior, a native language after shifting from village to town, and poor studies. He developed Elizah as a mental twin brother who acted as his savior against bullies. He later met Zayn in class 5, fell in love with a cheating girl in class 10, met Nilanjona in college who brought his original self back, and later had Grace as a partner.",
     "status": "Alive",
     "quote": "he has 2 personalities .another one is elizah.who is very badass and brutal and unlike ethan he is extrovert and charming too. so,in my story,i wanted to show ethan is bullied from his childhood",
@@ -280,7 +280,7 @@
     "source": "Issabela.pdf"
   },
   {
-    "existing_name": "Samuel",
+    "existing_name": "Samuel Sterling",
     "new_facts": "Engaged in tactical combat with Alistair alongside Redline, utilizing positioning and spatial geometry.",
     "status": null,
     "quote": "Samuel's tie swept left Alistair was right Samuel corrected right Alistair was behind him Samuel spun",
@@ -301,7 +301,7 @@
     "source": "Norman.pdf"
   },
   {
-    "existing_name": "Samuel",
+    "existing_name": "Samuel Sterling",
     "new_facts": "Samuel utilizes a combat identity focused on close-quarters combat, structural warfare, and adaptive martial arts including Lethwei, Krav Maga, Combat Sambo, and Silat. He possesses extreme pain tolerance, mental endurance, Ghost Sense for extreme situational awareness, and Threat Threading. His signature weapon is a softcore armament disguised as a tie that can harden beyond known metal and act as a razor-sharp, unbreakable tool.",
     "status": "Alive",
     "quote": "Samuel’s overall fighting style? Close-Quarters Structural Warfare. Short description: A momentum-based, anatomy-targeting combat system that blends brutal clinch striking with redirection throws and joint destruction",
@@ -413,7 +413,7 @@
     "source": "yoshiko.pdf"
   },
   {
-    "existing_name": "Zayn",
+    "existing_name": "Zayn Hayes",
     "new_facts": "Knew Yoshiko's truth from Season 1, keeping the secret to protect Nyxia.",
     "status": "Alive",
     "quote": "Zayn knew Yoshiko’s truth from Season 1 — CONFIRMED This is peak Zayn. You said: Yoshiko wanted to be Nyxia’s manager Zayn voted “yes” immediately Because he knew something",
@@ -565,5 +565,145 @@
     "status": "Dead",
     "quote": "Confirmed Members (15th century): Ramiz, Francisco/Nasab, Anna la Sarta, Issabela/Zaynab, Marco, Mehnaz, Abdul, Anthony, Khalid (briefly), Dorian Cross.",
     "source": "SCU canon PDFs (Characters, Scu map, Legacy of maverick, All the institute of SCU, ALISTAIR QUINN)"
+  },
+  {
+    "existing_name": "Ethan Thorne",
+    "new_facts": "S1: stripped down — chained, 'killed', imprisoned by Stitch for the crime of being right; the crucible everything later builds on. S3: defeats Elizah by REJECTING his own blood power — his highest moral moment, restraint over the easy bloodline path. S5 THE PEAK: wields wind AND blood together, finally accepts Elizah — a child's refusal becomes an adult's synthesis; his death completes the arc.",
+    "status": "Dead",
+    "quote": "He spent S3 rejecting blood power on principle. He spent S5 INTEGRATING it with wisdom.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Elizah",
+    "new_facts": "S1: seed planted — Ethan's 'death' is the first condition of her existence. S2: the gravitational center — from awakened to undeniable, 'necessary cruelty the world forced into existence'; S2 is her defining season.",
+    "status": "Alive",
+    "quote": "She moves from awakened to undeniable. Necessary cruelty the world forced into existence.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Zayn Hayes",
+    "new_facts": "S1: framed as THE lead — discovers being the face doesn't make you the center. S2: learns of his too-late brotherhood with David — loss-shaped growth.",
+    "status": "Alive",
+    "quote": "He finds out what he had right as it's taken.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Samuel Sterling",
+    "new_facts": "S1: one definitive moment — punched Stitch and walked; the nose scar Stitch carries for the rest of the series IS Samuel's arc compressed into one action. Growth here is refusal.",
+    "status": "Alive",
+    "quote": "That nose scar Stitch carries for the rest of the series IS Samuel's S1 arc compressed into one action.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Grace",
+    "new_facts": "S2: awakens Athena's Judgement — born into power and cost in the same season, pays mentally immediately. S3: retires, mentally exhausted, honoring her own limits. S5: returns not as a healer but as Judgment — hardened, not broken.",
+    "status": "Alive",
+    "quote": "She returns not as a healer but as Judgment.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Yoshiko",
+    "new_facts": "S2: enters as 'just a manager' — isn't; quiet depth surfaces without announcement. Redline S1: fully operational spy in the field. Redline S2: Corvani dies while Samuel is absent; she chooses to leave and join The Obsidians — conviction over collapse.",
+    "status": "Alive",
+    "quote": "She doesn't collapse, she decides.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Arashi",
+    "new_facts": "S2: recontextualizes Nullborn for the entire universe — his presence grows the audience's understanding of the world. Dies at the start of S5 by Alt David and the Kurohana clan, watching Kazumi's face, never knowing she'll one day understand him — vindicated too late.",
+    "status": "Dead",
+    "quote": "Vindicated too late. That's his tragedy and it's airtight.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Silas",
+    "new_facts": "S2: appears like a myth walking into reality — even the entrance is an event.",
+    "status": "Alive",
+    "quote": "Appears like a myth walking into reality.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Marcello Corvani",
+    "new_facts": "S2: returns tired, principled, furious — re-establishes as the human spine; his finest hour. S4: returns from the pocket dimension with forbidden knowledge — not the same man who entered. Redline S2: dies while Samuel is absent.",
+    "status": "Dead",
+    "quote": "Whatever came back from that pocket dimension is not the same man who entered.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Arzuna",
+    "new_facts": "S3: villain-to-anti-hero — the cleanest arc flip in the SCU, earned through what she refuses to do. S5: kills Maliha — love corrupted by grief; the anti-hero completes through the hardest single act.",
+    "status": "Alive",
+    "quote": "No clean hands, but a completed choice.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Derek Miles",
+    "new_facts": "S3: chip removal, first crack — 'I choose'; starts becoming a person rather than a weapon. Redline S2: becomes acting commanding officer while Samuel is absent — choosing for others.",
+    "status": "Alive",
+    "quote": "The personal growth of S3 becomes professional responsibility here.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Aariz Maddox",
+    "new_facts": "S3: chases strength, gets humbled — growth through collision with his own ceiling.",
+    "status": "Alive",
+    "quote": "The lesson arrives hard.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Nilanjona",
+    "new_facts": "S4: accepts guardianship and steps away — a complete arc in one action; she doesn't fight the role, she walks into it and walks off. Full circle.",
+    "status": "Alive",
+    "quote": "The acceptance IS the peak.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Niharo",
+    "new_facts": "S4: steps forward as the new existential threat — the world level-shifting to accommodate him.",
+    "status": "Alive",
+    "quote": "His emergence IS his growth in the narrative sense.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Eldrich Aldercrest",
+    "new_facts": "S4: still guarding the throne while everything reorganizes — his constancy IS his character; the man who doesn't move while the world rewrites itself.",
+    "status": "Alive",
+    "quote": "His constancy IS his character.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Kazumi",
+    "new_facts": "Bloodlines: discovers she's Yoshiko's twin sister — spent her life hating the wrong people under a false identity; the truth destroys what she thought she was, then demands she rebuild. Redline S2: finishes rebuilding the Kara clan with Mashiho, then joins The Obsidians — completion and beginning in one breath.",
+    "status": "Alive",
+    "quote": "She closes one chapter and starts another without a breath between them.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Mashiho",
+    "new_facts": "Bloodlines: fights and kills his own father Pride during the clan slaughter — judgment on the family meant to protect him. Then rebuilds the Kara clan with Kazumi and joins The Obsidians.",
+    "status": "Alive",
+    "quote": "Growth through the most specific kind of devastation.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Ayaan Siddiqi",
+    "new_facts": "Redline S1: frontliner — the chair guy is fighting now; the most visually dramatic shift of his arc. Redline S2: COMMANDING LEAD — from support chair to directing the entire operation; the longest single distance traveled in the SCU.",
+    "status": "Alive",
+    "quote": "The chair. The commanding officer seat. That distance is the longest single character traveled in this universe.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Saya",
+    "new_facts": "Redline S1: operative arc building — the spark with Arvin hinted. Redline S2: joins The Obsidians knowing the full cost — Arvin and Samuel on the other side — growth through choosing cause over comfort.",
+    "status": "Alive",
+    "quote": "Growth through choosing cause over comfort when both cost something real.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
+  },
+  {
+    "existing_name": "Arvin",
+    "new_facts": "Redline S1: debut — the spark with Saya; everything after traces back to what starts here.",
+    "status": "Alive",
+    "quote": "Everything that comes after traces back to what starts here.",
+    "source": "SCU canon PDFs — Scu map (growth analysis)"
   }
 ]

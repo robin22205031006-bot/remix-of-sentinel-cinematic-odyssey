@@ -576,3 +576,23 @@ body {
 [data-ui-mode="manga"] .tier-vfx-guardian,
 [data-ui-mode="manga"] .tier-vfx-angle { animation: none; }
 [data-ui-mode="manga"] .tier-vfx-legendary { animation: none; }
+
+/* ===== Textured theme finishes (tinted by active theme accent) ===== */
+[data-theme="brushed"] body {
+  background-image: repeating-linear-gradient(90deg, transparent 0 3px, rgba(255,255,255,.015) 3px 4px);
+}
+[data-theme="grunge"] body {
+  background-image: radial-gradient(rgba(0,0,0,.12) 1px, transparent 1.5px), radial-gradient(rgba(255,255,255,.03) 1px, transparent 1.5px);
+  background-size: 7px 7px, 11px 11px;
+  background-position: 0 0, 3px 5px;
+}
+[data-theme="ink"] body {
+  background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(0,0,0,.1) 6px 7px);
+}
+[data-theme="weave"] body {
+  background-image: repeating-linear-gradient(0deg, transparent 0 4px, rgba(255,255,255,.02) 4px 5px), repeating-linear-gradient(90deg, transparent 0 4px, rgba(255,255,255,.02) 4px 5px);
+  background-size: 10px 10px;
+}
+[data-theme="fabric"] body {
+  background-image: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.04), transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(0,0,0,.15), transparent 60%);
+}

@@ -125,6 +125,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
   const combat = e.kind === "character" ? getCombatStats(e.stats) : null;
   const [comparing, setComparing] = useState(false);
+  const [dossierTab, setDossierTab] = useState<"lore" | "powers" | "bonds">("lore");
   const [abilityInfo, setAbilityInfo] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [style, setStyle] = useState<CSSProperties>({});
@@ -258,15 +259,29 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
               <button aria-label="Close" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full bg-secondary"><X className="h-4 w-4" /></button>
             </div>
           </div>
+          {/* Dossier tabs: Lore / Powers / Bonds */}
+          <div className="flex gap-1.5" role="tablist">
+            {([["lore", "Lore"], ["powers", "Powers"], ["bonds", "Bonds & Series"]] as const).map(([t, label]) => (
+              <button
+                key={t}
+                role="tab"
+                aria-selected={dossierTab === t}
+                onClick={() => setDossierTab(t)}
+                className={`rounded-full px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors ${dossierTab === t ? "bg-accent text-accent-foreground" : "bg-secondary/60 text-muted-foreground hover:text-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <SketchGallery images={e.sketches} name={e.name} />
-          {e.description && <p className="whitespace-pre-line text-foreground/85">{e.description}</p>}
-          {combat && (
+          {dossierTab === "lore" && e.description && <p className="whitespace-pre-line text-foreground/85">{e.description}</p>}
+          {dossierTab === "lore" && combat && (
             <div className="rounded-xl border border-white/10 bg-secondary/20 p-4">
               <h4 className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Combat metrics</h4>
               <StatRadar a={combat} nameA={e.name} size={230} />
             </div>
           )}
-          {(e.abilities?.length ?? 0) > 0 && (
+          {dossierTab === "powers" && (e.abilities?.length ?? 0) > 0 && (
             <div className="rounded-xl border border-white/10 bg-secondary/20 p-4">
               <h4 className="mb-3 text-[11px] uppercase tracking-widest text-muted-foreground">Abilities &amp; biological traits</h4>
               <div className="grid gap-3">
@@ -289,19 +304,19 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
               </div>
             </div>
           )}
-          {stats.length > 0 && (
+          {dossierTab === "lore" && stats.length > 0 && (
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
               {stats.map(([k, v]) => (
                 <div key={k}><dt className="text-[11px] uppercase tracking-widest text-muted-foreground">{k}</dt><dd className="text-base">{v}</dd></div>
               ))}
             </dl>
           )}
-          <EntityLinks entity={e} isAdmin={isAdmin} onOpen={onOpen} />
-          {e.kind === "character" && <CharacterRelationships entity={e} isAdmin={isAdmin} onOpen={onOpen} />}
-          {e.kind !== "character" && <OrgHierarchy entity={e} onOpen={onOpen} />}
-          {e.kind === "character" && <SeriesAppearances entity={e} />}
-          {e.kind === "character" && <CompareSentinel open={comparing} onOpenChange={setComparing} entity={e} />}
-          {notes && notes.length > 0 && (
+          {dossierTab === "bonds" && <EntityLinks entity={e} isAdmin={isAdmin} onOpen={onOpen} />}
+          {dossierTab === "bonds" && e.kind === "character" && <CharacterRelationships entity={e} isAdmin={isAdmin} onOpen={onOpen} />}
+          {dossierTab === "bonds" && e.kind !== "character" && <OrgHierarchy entity={e} onOpen={onOpen} />}
+          {dossierTab === "bonds" && e.kind === "character" && <SeriesAppearances entity={e} />}
+          {dossierTab === "bonds" && e.kind === "character" && <CompareSentinel open={comparing} onOpenChange={setComparing} entity={e} />}
+          {dossierTab === "lore" && notes && notes.length > 0 && (
             <div className="grid gap-3">
               <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Lore notes</h4>
               {notes.map((n) => (
@@ -355,6 +370,47 @@ function AbilityInfoDialog({ name, wielder, onClose }: { name: string | null; wi
   );
 }
 
+/** AAA character-select style showcase: snap carousel spotlight cards. */
+function ShowcaseView({ list, onOpen }: { list: Entity[]; onOpen: (e: Entity, ev: React.MouseEvent) => void }) {
+  return (
+    <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {list.map((e) => (
+        <button
+          key={e.id}
+          data-card
+          onClick={(ev) => onOpen(e, ev)}
+          className={`group relative w-[78vw] max-w-xs shrink-0 snap-center overflow-hidden rounded-3xl text-left ${tierDef(e.character_tier)?.vfxClass ?? ""}`}
+          style={{ "--scu-aura": e.accent_glow ?? e.theme_color ?? "#a855f7", minHeight: "22rem" } as unknown as CSSProperties}
+        >
+          {e.image_url ? (
+            <img src={e.image_url} alt={e.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary via-background to-accent/20" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+          <div className="relative flex h-full min-h-[22rem] flex-col justify-between p-5">
+            <div className="flex justify-between">
+              {tierDef(e.character_tier) && (
+                <span className="rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest" style={{ borderColor: tierDef(e.character_tier)!.color, color: tierDef(e.character_tier)!.color }}>
+                  {e.character_tier}
+                </span>
+              )}
+              {e.theme_song_url && <ThemeSongButton url={e.theme_song_url} />}
+            </div>
+            <div>
+              <h3 className="font-display text-3xl font-bold text-white drop-shadow-lg">{e.name}</h3>
+              <p className="mt-1 line-clamp-2 text-sm text-white/75">{e.role ?? e.category ?? ""}</p>
+              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-white backdrop-blur">
+                View dossier →
+              </span>
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function EntitySection({
   kinds, title, subtitle, categories, initialQuery = "", openId, view,
 }: { kinds: Entity["kind"][]; title: string; subtitle: string; categories: string[]; initialQuery?: string; openId?: string | undefined; view?: "characters" | "organizations" }) {
@@ -367,8 +423,8 @@ export function EntitySection({
   const [deleting, setDeleting] = useState<Entity | null>(null);
   const [merging, setMerging] = useState<Entity | null>(null);
   const [cat, setCat] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
-    try { return localStorage.getItem("scu-card-view") === "list" ? "list" : "grid"; } catch { return "grid"; }
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "showcase">(() => {
+    try { const v = localStorage.getItem("scu-card-view"); return v === "list" || v === "showcase" ? v : "grid"; } catch { return "grid"; }
   });
   const [q, setQ] = useState(initialQuery);
   useEffect(() => setQ(initialQuery), [initialQuery]);
@@ -455,7 +511,7 @@ export function EntitySection({
           </button>
         ))}
         <span className="mx-1 w-px self-stretch bg-border" />
-        {([["grid", "Grid"], ["list", "List"]] as const).map(([v, label]) => (
+        {([["grid", "Grid"], ["list", "List"], ["showcase", "Showcase"]] as const).map(([v, label]) => (
           <button
             key={v}
             onClick={() => { setViewMode(v); try { localStorage.setItem("scu-card-view", v); } catch { /* noop */ } }}
@@ -470,6 +526,8 @@ export function EntitySection({
         <EntityGridSkeleton />
       ) : list.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">{data?.length ? "No matches." : "Nothing in the archive yet."}</p>
+      ) : viewMode === "showcase" ? (
+        <ShowcaseView list={list} onOpen={(e, ev) => { sfx.tierReveal(e.character_tier); setOpen({ id: e.id, rect: (ev.currentTarget.closest("[data-card]") as HTMLElement | null)?.getBoundingClientRect() ?? null }); }} />
       ) : (
         <div className={viewMode === "grid" ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3"}>
           <AnimatePresence initial={false}>

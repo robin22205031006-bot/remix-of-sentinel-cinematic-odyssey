@@ -38,6 +38,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     for (const [k, v] of Object.entries(themeVars(t, dark))) root.style.setProperty(k, v);
     root.classList.toggle("dark", dark);
     root.dataset["minimal"] = t.minimal ? "true" : "false";
+    root.setAttribute("data-theme", t.id);
     // Zoom is expressed as a CSS var so the admin typography base-scale can compose with it.
     root.style.setProperty("--scu-zoom", String(FONT_SCALES[scaleIndex] ?? 1));
     try {

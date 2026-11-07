@@ -179,9 +179,12 @@ export type Database = {
       entities: {
         Row: {
           abilities: string[]
+          accent_glow: string | null
           alias: string | null
+          animation_style: string | null
           beast_traits: string[]
           category: string | null
+          character_tier: string | null
           created_at: string
           description: string
           id: string
@@ -194,13 +197,18 @@ export type Database = {
           sketches: string[]
           stats: Json
           status: string
+          theme_color: string | null
+          theme_song_url: string | null
           updated_at: string
         }
         Insert: {
           abilities?: string[]
+          accent_glow?: string | null
           alias?: string | null
+          animation_style?: string | null
           beast_traits?: string[]
           category?: string | null
+          character_tier?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -213,13 +221,18 @@ export type Database = {
           sketches?: string[]
           stats?: Json
           status?: string
+          theme_color?: string | null
+          theme_song_url?: string | null
           updated_at?: string
         }
         Update: {
           abilities?: string[]
+          accent_glow?: string | null
           alias?: string | null
+          animation_style?: string | null
           beast_traits?: string[]
           category?: string | null
+          character_tier?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -232,6 +245,8 @@ export type Database = {
           sketches?: string[]
           stats?: Json
           status?: string
+          theme_color?: string | null
+          theme_song_url?: string | null
           updated_at?: string
         }
         Relationships: [

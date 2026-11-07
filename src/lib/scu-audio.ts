@@ -142,6 +142,64 @@ export const sfx = {
     });
   },
 
+  /** Air-sweep whoosh for card swipes, drawer opens and transitions. */
+  whoosh() {
+    ready(() => {
+      noise({ dur: 0.22, vol: 0.05, freq: 1200, q: 0.7, type: "bandpass" });
+      noise({ dur: 0.16, vol: 0.03, freq: 2600, q: 1.4, delay: 0.03 });
+      tone({ freq: 300, freqEnd: 90, type: "sine", dur: 0.2, vol: 0.03 });
+    });
+  },
+
+  /** Celestial harp-ish chime for Angle (Angel) tier reveals. */
+  angel() {
+    ready(() => {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
+        tone({ freq: f, type: "sine", dur: 0.7, vol: 0.04, delay: i * 0.07, attack: 0.01 }),
+      );
+      tone({ freq: 1568, type: "triangle", dur: 0.5, vol: 0.02, delay: 0.3, attack: 0.01 });
+    });
+  },
+
+  /** Deep crimson energy pulse for Mythic tier reveals. */
+  mythic() {
+    ready(() => {
+      tone({ freq: 55, freqEnd: 38, type: "sawtooth", dur: 0.7, vol: 0.06, attack: 0.02 });
+      tone({ freq: 110, freqEnd: 55, type: "square", dur: 0.5, vol: 0.035, delay: 0.05 });
+      noise({ dur: 0.4, vol: 0.04, freq: 220, q: 0.6, type: "lowpass", delay: 0.02 });
+      tone({ freq: 880, freqEnd: 220, type: "sine", dur: 0.35, vol: 0.03, delay: 0.1 });
+    });
+  },
+
+  /** Futuristic HUD blip for Legendary/Guardian/Heroic and generic UI pops. */
+  hud() {
+    ready(() => {
+      tone({ freq: 1400, freqEnd: 2100, type: "square", dur: 0.05, vol: 0.03 });
+      tone({ freq: 700, type: "sine", dur: 0.08, vol: 0.025, delay: 0.04 });
+    });
+  },
+
+  /** Soft acoustic pop for ability badge / rarity filter taps. */
+  pop() {
+    ready(() => {
+      tone({ freq: 660, freqEnd: 990, type: "triangle", dur: 0.07, vol: 0.05 });
+      noise({ dur: 0.03, vol: 0.02, freq: 4000, q: 2 });
+    });
+  },
+
+  /** Play the SFX matching a character's tier. */
+  tierReveal(tier: string | null | undefined) {
+    switch ((tier ?? "").toLowerCase()) {
+      case "mythic": return this.mythic();
+      case "angle":
+      case "angel": return this.angel();
+      case "legendary":
+      case "guardian":
+      case "heroic": return this.hud();
+      default: return this.whoosh();
+    }
+  },
+
   /** Soft cinematic HUD boot tone — played once per session on first interaction. */
   welcome() {
     ready(() => {

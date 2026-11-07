@@ -83,6 +83,7 @@ export const ABILITY_REGISTRY: AbilityDef[] = [
   { key: "azure_revenant_state", label: "Azure Revenant State", tier: "Unique", group: "power", color: "#0891b2", icon: Ghost, description: "Cyan-violet revenant aura." },
   { key: "paleborne_nightmare", label: "Paleborne Nightmare Dominion", tier: "Unique", group: "power", color: "#eab308", icon: Ghost, description: "Predatory red and yellow nightmare dominion." },
   { key: "ghost_01_armament", label: "Ghost-01 Softcore Armament", tier: "Unique", group: "role", color: "#64748b", icon: Bot, description: "Tactical steel with hardening shimmer." },
+  { key: "architect_cube_guardian", label: "Architect Cube Guardian", tier: "Exceptional", group: "role", color: "#ff9f1c", icon: Crown, description: "Agnus-bound structural authority — architect amber / monolith gold." },
 
   // ---- Ancient / special powers ----
   { key: "blood_art", label: "Blood Art", tier: "Ancient", group: "art", color: "#991b1b", icon: Scroll },

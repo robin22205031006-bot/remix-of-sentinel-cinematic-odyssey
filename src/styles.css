@@ -273,3 +273,119 @@ html {
 h1, h2, h3, h4 {
   font-weight: var(--scu-heading-weight, 500);
 }
+
+/* ===== Character tier VFX + card animation styles ===== */
+/* GPU-friendly: only transform/opacity/box-shadow animate. */
+
+.tier-vfx-mythic {
+  animation: scu-tier-mythic 2.6s ease-in-out infinite;
+  box-shadow: 0 0 0 1px rgba(255, 0, 51, 0.55), 0 0 18px rgba(255, 0, 51, 0.35);
+}
+@keyframes scu-tier-mythic {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255,0,51,.45), 0 0 10px rgba(255,0,51,.22); }
+  50% { box-shadow: 0 0 0 1px rgba(255,0,51,.8), 0 0 26px rgba(255,0,51,.5); }
+}
+
+.tier-vfx-angle {
+  animation: scu-tier-angle 3.2s ease-in-out infinite;
+  box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.4), 0 0 16px rgba(255, 240, 200, 0.25);
+}
+@keyframes scu-tier-angle {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255,215,0,.35), 0 0 10px rgba(255,240,200,.18); }
+  50% { box-shadow: 0 0 0 1px rgba(255,215,0,.65), 0 0 24px rgba(255,240,200,.4); }
+}
+
+.tier-vfx-guardian {
+  animation: scu-tier-guardian 3.8s ease-in-out infinite;
+  box-shadow: 0 0 0 1px rgba(14, 116, 144, 0.55), 0 0 14px rgba(14, 116, 144, 0.3);
+}
+@keyframes scu-tier-guardian {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(14,116,144,.45), 0 0 8px rgba(14,116,144,.22); }
+  50% { box-shadow: 0 0 0 1px rgba(14,116,144,.7), 0 0 18px rgba(14,116,144,.38); }
+}
+
+.tier-vfx-legendary {
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.45), 0 0 14px rgba(212, 175, 55, 0.28);
+}
+.tier-vfx-legendary:hover {
+  animation: scu-tier-legendary-sweep 1.4s ease;
+}
+@keyframes scu-tier-legendary-sweep {
+  from { box-shadow: 0 0 0 1px rgba(212,175,55,.5), 0 0 14px rgba(212,175,55,.3), inset 0 0 0 rgba(212,175,55,0); }
+  40% { box-shadow: 0 0 0 1px rgba(212,175,55,.8), 0 0 30px rgba(212,175,55,.5), inset 0 0 40px rgba(212,175,55,.15); }
+  to { box-shadow: 0 0 0 1px rgba(212,175,55,.45), 0 0 14px rgba(212,175,55,.28), inset 0 0 0 rgba(212,175,55,0); }
+}
+
+.tier-vfx-heroic {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.4), 0 0 12px rgba(34, 211, 238, 0.25);
+}
+
+/* Per-card animation_style overlays */
+.anim-aura-pulse { animation: scu-aura-pulse 3s ease-in-out infinite; }
+@keyframes scu-aura-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--scu-aura, rgba(168, 85, 247, 0.35)); }
+  50% { box-shadow: 0 0 22px 2px var(--scu-aura, rgba(168, 85, 247, 0.5)); }
+}
+
+.anim-embers { position: relative; overflow: hidden; }
+.anim-embers::before,
+.anim-embers::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 78%, var(--scu-aura, #f97316) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 34% 62%, var(--scu-aura, #f97316) 50%, transparent 51%),
+    radial-gradient(1px 1px at 58% 82%, var(--scu-aura, #fbbf24) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 76% 58%, var(--scu-aura, #f97316) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 74%, var(--scu-aura, #fbbf24) 50%, transparent 51%);
+  animation: scu-embers-drift 5s linear infinite;
+  opacity: 0.55;
+}
+.anim-embers::after { animation-duration: 7s; animation-delay: -3s; opacity: 0.35; }
+@keyframes scu-embers-drift {
+  from { transform: translate3d(0, 12px, 0); }
+  to { transform: translate3d(-8px, -60px, 0); }
+}
+
+.anim-void-rift { position: relative; overflow: hidden; }
+.anim-void-rift::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background: radial-gradient(ellipse 40% 55% at 50% 50%, rgba(139, 92, 246, 0.22), transparent 70%);
+  animation: scu-void-pulse 3.4s ease-in-out infinite;
+}
+@keyframes scu-void-pulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+.anim-holographic { position: relative; overflow: hidden; }
+.anim-holographic::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: -30%;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(125, 211, 252, 0.14) 45%, rgba(255, 255, 255, 0.18) 50%, rgba(125, 211, 252, 0.14) 55%, transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  transition: transform 0.9s ease;
+}
+.anim-holographic:hover::after { transform: translateX(420%) skewX(-12deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tier-vfx-mythic, .tier-vfx-angle, .tier-vfx-guardian,
+  .tier-vfx-legendary, .anim-aura-pulse, .anim-embers::before, .anim-embers::after,
+  .anim-void-rift::before, .anim-holographic::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .tier-vfx-mythic, .tier-vfx-angle, .tier-vfx-guardian, .tier-vfx-legendary, .tier-vfx-heroic {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.25) !important;
+  }
+}

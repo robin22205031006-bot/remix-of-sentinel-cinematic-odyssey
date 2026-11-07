@@ -51,6 +51,11 @@ ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS locked_fields text[] NOT NU
 ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS parent_id uuid;
 ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS abilities text[] NOT NULL DEFAULT '{}';
 ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS beast_traits text[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS character_tier text;
+ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS animation_style text;
+ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS theme_color text;
+ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS accent_glow text;
+ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS theme_song_url text;
 ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.entities ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 DO $$ BEGIN

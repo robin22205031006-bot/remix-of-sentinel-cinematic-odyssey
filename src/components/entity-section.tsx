@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent as ReactTouchEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type MotionStyle } from "framer-motion";
 import { BookOpen, FileDown, GitCompareArrows, GitMerge, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useWebMCP } from "use-webmcp-tool";
@@ -28,6 +28,7 @@ import { CompareSentinel } from "./compare-sentinel";
 import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
 import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
 import { ABILITY_GROUP_LABELS, abilityDef, sortAbilities, type AbilityGroup } from "@/lib/abilities";
+import { animationClass, tierDef } from "@/lib/character-tier";
 import { exportDossierPdf, type DossierGroup } from "@/lib/export-dossier";
 import { getCombatStats } from "@/lib/combat-stats";
 
@@ -45,6 +46,40 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/** Single-instance theme-song player — only one card track plays at a time. */
+let activeAudio: HTMLAudioElement | null = null;
+function toggleThemeSong(url: string) {
+  if (activeAudio && !activeAudio.paused) {
+    activeAudio.pause();
+    activeAudio = null;
+    return;
+  }
+  const audio = new Audio(url);
+  audio.volume = 0.6;
+  audio.onended = () => { if (activeAudio === audio) activeAudio = null; };
+  activeAudio = audio;
+  void audio.play().catch(() => { activeAudio = null; });
+}
+
+export function ThemeSongButton({ url }: { url: string }) {
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    const check = () => setPlaying(!!activeAudio && !activeAudio.paused);
+    const t = setInterval(check, 400);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <button
+      aria-label={playing ? "Pause theme song" : "Play theme song"}
+      title={playing ? "Pause theme song" : "Play theme song"}
+      onClick={(ev) => { ev.stopPropagation(); toggleThemeSong(url); }}
+      className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground hover:text-foreground"
+    >
+      {playing ? <span className="text-[10px] font-bold">❚❚</span> : <span className="text-[10px] font-bold">▶</span>}
+    </button>
+  );
+}
+
 const Avatar = memo(function Avatar({ e, size }: { e: Entity; size: string }) {
   return e.image_url ? (
     <img src={e.image_url} alt={e.name} loading="lazy" decoding="async" className={`${size} shrink-0 rounded-xl object-cover`} />
@@ -54,13 +89,23 @@ const Avatar = memo(function Avatar({ e, size }: { e: Entity; size: string }) {
 });
 
 const CardBody = memo(function CardBody({ e, showKind }: { e: Entity; showKind: boolean }) {
+  const tier = tierDef(e.character_tier);
+  const theme = e.theme_color ?? tier?.color ?? null;
   return (
     <div className="min-w-0 flex-1 text-left">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <StatusBadge status={e.status} />
+        {tier && (
+          <span
+            className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+            style={{ color: tier.color, borderColor: `${tier.color}66`, background: `${tier.color}14`, boxShadow: `0 0 8px ${tier.color}33` }}
+          >
+            {tier.label}
+          </span>
+        )}
         {(e.category || showKind) && <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{e.category ?? e.kind}</span>}
       </div>
-      <h2 className="mt-1 truncate text-2xl font-medium">{e.name}</h2>
+      <h2 className="mt-1 truncate text-2xl font-medium" style={theme ? { color: theme } : undefined}>{e.name}</h2>
       <p className="truncate text-sm text-muted-foreground">{[e.alias, e.role].filter(Boolean).join(" · ") || "—"}</p>
       {e.kind === "character" && (e.abilities?.length ?? 0) > 0 && (
         <div className="mt-1.5"><AbilityBadgeRow abilities={sortAbilities(e.abilities ?? [])} max={3} /></div>
@@ -78,6 +123,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const [exporting, setExporting] = useState(false);
   const [style, setStyle] = useState<CSSProperties>({});
   useEffect(() => {
+    sfx.tierReveal(e.character_tier);
     const k = (ev: KeyboardEvent) => ev.key === "Escape" && onClose();
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
@@ -153,7 +199,22 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
         </div>
         <section className="morph-in glass grid gap-6 rounded-2xl p-5 text-sm leading-relaxed sm:p-7">
           <div className="flex items-start justify-between">
-            <h3 className="text-4xl font-medium glow-text">{e.name}</h3>
+            <h3 className="flex items-center gap-2 text-4xl font-medium glow-text">
+            {e.name}
+            {tierDef(e.character_tier) && (
+              <span
+                className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider"
+                style={{
+                  color: tierDef(e.character_tier)!.color,
+                  borderColor: `${tierDef(e.character_tier)!.color}66`,
+                  background: `${tierDef(e.character_tier)!.color}14`,
+                  boxShadow: `0 0 10px ${tierDef(e.character_tier)!.color}44`,
+                }}
+              >
+                {tierDef(e.character_tier)!.label}
+              </span>
+            )}
+          </h3>
             <div className="flex items-center gap-1">
               {e.kind === "character" && (
                 <button
@@ -174,6 +235,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
               >
                 <FileDown className="h-4 w-4" />
               </button>
+              {e.theme_song_url && <ThemeSongButton url={e.theme_song_url} />}
               <Link
                 to="/reader"
                 search={{ e: e.id }}
@@ -355,12 +417,20 @@ export function EntitySection({
                 animate={{ opacity: 1, scale: 1, y: 0, transition: { delay: Math.min(i * 0.03, 0.45), duration: 0.3, ease: [0.2, 0.8, 0.2, 1] } }}
                 exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.18, ease: "easeIn" } }}
                 whileTap={{ scale: 0.98 }}
-                className="glass group flex gap-4 rounded-2xl p-4 transition-[transform,box-shadow,border-radius] duration-300 hover:-translate-y-0.5 hover:rounded-tr-[2rem] hover:glow-ring"
+                className={`glass group relative flex gap-4 overflow-hidden rounded-2xl p-4 transition-[transform,box-shadow,border-radius] duration-300 hover:-translate-y-0.5 hover:rounded-tr-[2rem] hover:glow-ring ${tierDef(e.character_tier)?.vfxClass ?? ""} ${animationClass(e.animation_style)}`}
+                style={{ "--scu-aura": e.accent_glow ?? e.theme_color ?? "#a855f7" } as unknown as MotionStyle}
               >
-                <button className="flex min-w-0 flex-1 gap-4" onClick={(ev) => setOpen({ id: e.id, rect: (ev.currentTarget.closest("article") as HTMLElement).getBoundingClientRect() })}>
+                <button
+                  className="flex min-w-0 flex-1 gap-4"
+                  onClick={(ev) => {
+                    sfx.tierReveal(e.character_tier);
+                    setOpen({ id: e.id, rect: (ev.currentTarget.closest("article") as HTMLElement).getBoundingClientRect() });
+                  }}
+                >
                   <Avatar e={e} size="h-16 w-16" />
                   <CardBody e={e} showKind={kinds.length > 1} />
                 </button>
+                {e.theme_song_url && <ThemeSongButton url={e.theme_song_url} />}
                 {isAdmin && (
                   <div className="flex shrink-0 flex-col gap-1">
                     <Button size="icon" variant="ghost" className="h-8 w-8 active:scale-90" aria-label="Edit" onClick={() => setEditing(e)}><Pencil className="h-3.5 w-3.5" /></Button>

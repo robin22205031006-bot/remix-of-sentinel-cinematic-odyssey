@@ -13,6 +13,7 @@ import { CHARACTER_STATUSES, GROUP_LINK_KINDS, GROUP_STATUSES, RELATIONSHIP_LABE
 import { COMBAT_STATS, getCombatStats, splitStats, type CombatStats } from "@/lib/combat-stats";
 import { mergeLocks } from "@/lib/lore-merge";
 import { AbilityPicker } from "./ability-picker";
+import { ANIMATION_LABELS, ANIMATION_STYLES, CHARACTER_TIERS } from "@/lib/character-tier";
 
 type Kind = Entity["kind"];
 const FIELDS = ["name", "alias", "role", "status", "category", "description", "image_url", "stats", "sketches"] as const;
@@ -53,6 +54,11 @@ export function EntityDialog({
     sketches: entity?.sketches ?? [],
     parent_id: entity?.parent_id ?? "",
     abilities: entity?.abilities ?? [],
+    character_tier: entity?.character_tier ?? "",
+    animation_style: entity?.animation_style ?? "",
+    theme_color: entity?.theme_color ?? "",
+    accent_glow: entity?.accent_glow ?? "",
+    theme_song_url: entity?.theme_song_url ?? "",
   });
   const [relTarget, setRelTarget] = useState("");
   const [relType, setRelType] = useState<string>(RELATIONSHIP_TYPES[0]);
@@ -126,6 +132,15 @@ export function EntityDialog({
       sketches: form.sketches,
       abilities: isChar ? form.abilities : (entity?.abilities ?? []),
       parent_id: isChar ? null : form.parent_id || null,
+      ...(isChar
+        ? {
+            character_tier: form.character_tier || null,
+            animation_style: form.animation_style || null,
+            theme_color: form.theme_color || null,
+            accent_glow: form.accent_glow || null,
+            theme_song_url: form.theme_song_url || null,
+          }
+        : {}),
     };
     let error;
     if (entity) {
@@ -218,6 +233,47 @@ export function EntityDialog({
           )}
           {isChar && (
             <AbilityPicker value={form.abilities} onChange={(abilities) => setForm({ ...form, abilities })} />
+          )}
+          {isChar && (
+            <div className="grid gap-3 rounded-xl border border-white/10 bg-secondary/30 p-4">
+              <Label>Character tier (admin)</Label>
+              <select
+                className="h-9 rounded-md border bg-background px-3 text-sm"
+                value={form.character_tier}
+                onChange={(e) => setForm({ ...form, character_tier: e.target.value })}
+              >
+                <option value="">— None —</option>
+                {CHARACTER_TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label>Theme color</Label>
+                  <Input type="color" value={form.theme_color || "#a855f7"} onChange={(e) => setForm({ ...form, theme_color: e.target.value })} className="h-9 p-1" />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>Accent glow</Label>
+                  <Input type="color" value={form.accent_glow || "#a855f7"} onChange={(e) => setForm({ ...form, accent_glow: e.target.value })} className="h-9 p-1" />
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Card animation style</Label>
+                <select
+                  className="h-9 rounded-md border bg-background px-3 text-sm"
+                  value={form.animation_style}
+                  onChange={(e) => setForm({ ...form, animation_style: e.target.value })}
+                >
+                  {ANIMATION_STYLES.map((s) => <option key={s} value={s}>{ANIMATION_LABELS[s]}</option>)}
+                </select>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Theme song URL</Label>
+                <Input
+                  value={form.theme_song_url}
+                  onChange={(e) => setForm({ ...form, theme_song_url: e.target.value })}
+                  placeholder="https://…/theme.mp3"
+                />
+              </div>
+            </div>
           )}
           <div className="grid gap-1.5"><Label>{isChar ? "Additional stats (one per line, e.g. \"Rank: Warden\")" : "Stats (one per line, e.g. \"Power: 9\")"}</Label><Textarea rows={3} value={form.stats} onChange={set("stats")} /></div>
           <div className="grid gap-1.5">

@@ -8,6 +8,8 @@ import { useNavHidden } from "@/lib/nav-visibility";
 
 const LS_MODE = "scu-nav-mode";
 const LS_POS = "scu-hud-pos";
+/** Bump this when the default anchor moves so stale saved positions reset. */
+const POS_VERSION = 2;
 export type NavMode = "standard" | "hud";
 export const navMode = (): NavMode => {
   if (typeof window === "undefined") return "standard";
@@ -23,13 +25,15 @@ export const setNavMode = (m: NavMode) => {
 export const hudNavEnabled = () => navMode() === "hud";
 export const setHudNav = (on: boolean) => setNavMode(on ? "hud" : "standard");
 
-const defaultPos = () => ({ x: window.innerWidth - 76, y: window.innerHeight - 76 });
+const defaultPos = () =>
+  typeof window === "undefined" ? { x: 0, y: 0 } : { x: window.innerWidth - 76, y: 84 };
 const loadPos = (): { x: number; y: number } => {
+  if (typeof window === "undefined") return { x: 0, y: 0 };
   try {
     const raw = localStorage.getItem(LS_POS);
     if (raw) {
       const p = JSON.parse(raw);
-      if (typeof p.x === "number" && typeof p.y === "number") return p;
+      if (p.v === POS_VERSION && typeof p.x === "number" && typeof p.y === "number") return { x: p.x, y: p.y };
     }
   } catch { /* noop */ }
   return defaultPos();
@@ -56,7 +60,7 @@ export function FloatingNav() {
 
   // Persist position + clamp on resize.
   useEffect(() => {
-    try { localStorage.setItem(LS_POS, JSON.stringify(pos)); } catch { /* noop */ }
+    try { localStorage.setItem(LS_POS, JSON.stringify({ ...pos, v: POS_VERSION })); } catch { /* noop */ }
   }, [pos]);
   useEffect(() => {
     const clamp = () =>
@@ -115,6 +119,17 @@ export function FloatingNav() {
 
   if (mode !== "hud" || navHidden) return null;
   const items = TABS;
+  // Fan direction follows screen half so nodes never clip off-viewport.
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const fanDown = pos.y < vh / 2;
+  const baseAngle = fanDown ? 90 : -90;
+  const radius = 112;
+  // Keep the whole ring inside horizontal bounds.
+  const ringCenterX = pos.x + 28;
+  const ringHalf = radius + 30;
+  const clampedCenter = Math.min(Math.max(ringCenterX, ringHalf + 8), vw - ringHalf - 8);
+  const offsetX = clampedCenter - ringCenterX;
 
   return (
     <div className="fixed z-40" style={{ left: pos.x, top: pos.y }}>
@@ -149,16 +164,15 @@ export function FloatingNav() {
               <button onClick={() => spinBy(45)} className="glass grid h-9 w-9 place-items-center rounded-full text-xs" aria-label="Rotate clockwise">↻</button>
             </motion.div>
             <motion.div
-              className="absolute bottom-16 left-1/2"
-              style={{ x: "-50%", rotate: spin }}
+              className={`absolute left-1/2 ${fanDown ? "top-16" : "bottom-16"}`}
+              style={{ x: `calc(-50% + ${offsetX}px)`, rotate: spin }}
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
               initial="hidden"
               animate="show"
             >
               {items.map((item, i) => {
-                const angle = -90 + (i - (items.length - 1) / 2) * 38;
+                const angle = baseAngle + (i - (items.length - 1) / 2) * 38;
                 const rad = (angle * Math.PI) / 180;
-                const radius = 118;
                 const x = Math.cos(rad) * radius;
                 const y = Math.sin(rad) * radius;
                 return (

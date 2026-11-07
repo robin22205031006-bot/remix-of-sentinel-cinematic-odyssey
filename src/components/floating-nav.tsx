@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
 import { RefreshCw } from "lucide-react";
 import { TABS } from "@/lib/nav";
+import { ThemeDrawer } from "./theme-drawer";
 import { sfx } from "@/lib/scu-audio";
 import { useNavHidden } from "@/lib/nav-visibility";
 
@@ -44,6 +45,7 @@ export function FloatingNav() {
   const [mode, setMode] = useState<NavMode>(navMode);
   const navHidden = useNavHidden();
   const [open, setOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [pos, setPos] = useState(loadPos);
   const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null);
   // Spin offset (degrees) — spring-smoothed for buttery rotation.
@@ -118,7 +120,8 @@ export function FloatingNav() {
   };
 
   if (mode !== "hud" || navHidden) return null;
-  const items = TABS;
+  const items = [...TABS, { to: "#theme", label: "Theme" }] as const;
+  const spread = items.length > 8 ? 32 : 38;
   // Fan direction follows screen half so nodes never clip off-viewport.
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
@@ -171,7 +174,8 @@ export function FloatingNav() {
               animate="show"
             >
               {items.map((item, i) => {
-                const angle = baseAngle + (i - (items.length - 1) / 2) * 38;
+                const isTheme = item.to === "#theme";
+                const angle = baseAngle + (i - (items.length - 1) / 2) * spread;
                 const rad = (angle * Math.PI) / 180;
                 const x = Math.cos(rad) * radius;
                 const y = Math.sin(rad) * radius;
@@ -187,14 +191,24 @@ export function FloatingNav() {
                     exit={{ opacity: 0, scale: 0.3, x: 0, y: 0, transition: { duration: 0.15, ease: "easeIn" } }}
                     className="absolute left-0 top-0"
                   >
-                    <Link
-                      to={item.to}
-                      onClick={() => { sfx.pop(); setOpen(false); }}
-                      className="glass glow-ring flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wide"
-                      aria-label={item.label}
-                    >
-                      {item.label.slice(0, 2)}
-                    </Link>
+                    {isTheme ? (
+                      <button
+                        onClick={() => { sfx.pop(); setOpen(false); setThemeOpen(true); }}
+                        className="glass glow-ring flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wide"
+                        aria-label="Theme"
+                      >
+                        {item.label.slice(0, 2)}
+                      </button>
+                    ) : (
+                      <Link
+                        to={item.to}
+                        onClick={() => { sfx.pop(); setOpen(false); }}
+                        className="glass glow-ring flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs font-semibold uppercase tracking-wide"
+                        aria-label={item.label}
+                      >
+                        {item.label.slice(0, 2)}
+                      </Link>
+                    )}
                   </motion.div>
                 );
               })}
@@ -213,6 +227,7 @@ export function FloatingNav() {
       >
         {open ? "✕" : "◉"}
       </motion.button>
+      <ThemeDrawer open={themeOpen} onOpenChange={setThemeOpen} />
     </div>
   );
 }

@@ -4,10 +4,10 @@ import { useAppearance } from "@/hooks/use-appearance";
 import { navMode, setNavMode, type NavMode } from "@/components/floating-nav";
 import { THEMES } from "@/lib/themes";
 
-export function ThemeDrawer() {
+export function ThemeDrawer({ open, onOpenChange }: { open?: boolean; onOpenChange?: (o: boolean) => void } = {}) {
   const { theme, setTheme, zoom, scaleIndex } = useAppearance();
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         <button aria-label="Appearance" className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-accent hover:glow-ring">
           <Palette className="h-3.5 w-3.5" />

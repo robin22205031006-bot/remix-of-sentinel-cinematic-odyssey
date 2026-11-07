@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,10 @@ import {
   normalizeAbilityKey,
   removeCustomAbility,
   saveCustomAbility,
+  saveAbilityOverride,
+  getAbilityOverrides,
+  removeAbilityOverride,
+  type AbilityOverride,
   type AbilityDef,
   type AbilityTier,
 } from "@/lib/abilities";
@@ -29,6 +33,7 @@ import type { Json } from "@/integrations/supabase/types";
 
 const ALL_KINDS = ["character", "organization", "clan", "bloodline", "faction"] as const;
 const CUSTOM_SETTINGS_KEY = "ability_registry";
+const OVERRIDES_SETTINGS_KEY = "ability_overrides";
 const REGISTRY_KEYS = new Set(ABILITY_REGISTRY.map((a) => a.key));
 
 export const Route = createFileRoute("/_authenticated/abilities")({
@@ -53,6 +58,7 @@ function AbilitiesHub() {
   const [tier, setTier] = useState<AbilityTier | "all">("all");
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [editingDef, setEditingDef] = useState<AbilityDef | null>(null);
   const [customsVersion, setCustomsVersion] = useState(0);
 
   // Hydrate admin-defined abilities from app_settings into the local registry cache.
@@ -66,6 +72,14 @@ function AbilitiesHub() {
         localStorage.setItem("scu_custom_abilities", JSON.stringify(list));
         setCustomsVersion((v) => v + 1);
       } catch { /* storage optional */ }
+      // Hydrate admin overrides (edited tiers/descriptions) the same way.
+      const { data: ov } = await supabase.from("app_settings").select("value").eq("key", OVERRIDES_SETTINGS_KEY).maybeSingle();
+      if (alive && ov?.value && typeof ov.value === "object" && !Array.isArray(ov.value)) {
+        try {
+          localStorage.setItem("scu_ability_overrides", JSON.stringify(ov.value));
+          setCustomsVersion((v) => v + 1);
+        } catch { /* storage optional */ }
+      }
     })();
     return () => { alive = false; };
   }, []);
@@ -163,6 +177,7 @@ function AbilitiesHub() {
       </header>
 
       {isAdmin && showAdd && <AddAbilityForm onSaved={() => { setShowAdd(false); setCustomsVersion((v) => v + 1); void qc.invalidateQueries({ queryKey: ["app-settings"] }); }} />}
+      {isAdmin && editingDef && <EditAbilityForm def={editingDef} onClose={() => setEditingDef(null)} onSaved={() => { setEditingDef(null); setCustomsVersion((v) => v + 1); void qc.invalidateQueries({ queryKey: ["app-settings"] }); }} />}
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <div className="relative">
@@ -199,6 +214,7 @@ function AbilitiesHub() {
                   onToggle={() => { sfx.click(); setOpenKey(openKey === d.key ? null : d.key); }}
                   isAdmin={isAdmin}
                   isCustom={customKeys.has(d.key)}
+                  onEdit={() => setEditingDef(d)}
                   onDeleteCustom={() => {
                     removeCustomAbility(d.key);
                     setCustomsVersion((v) => v + 1);
@@ -227,7 +243,7 @@ function tierColor(t: AbilityTier): string {
 }
 
 function AbilityCard({
-  def, holders, open, onToggle, isAdmin, isCustom, onDeleteCustom,
+  def, holders, open, onToggle, isAdmin, isCustom, onDeleteCustom, onEdit,
 }: {
   def: AbilityDef;
   holders: Entity[];
@@ -236,6 +252,7 @@ function AbilityCard({
   isAdmin: boolean;
   isCustom: boolean;
   onDeleteCustom: () => void;
+  onEdit: () => void;
 }) {
   const Icon = def.icon;
   return (
@@ -284,10 +301,17 @@ function AbilityCard({
               ))}
             </div>
           )}
-          {isAdmin && isCustom && (
-            <button onClick={onDeleteCustom} className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive">
-              <Trash2 className="h-3 w-3" /> Remove from registry
-            </button>
+          {isAdmin && (
+            <div className="mt-3 flex items-center gap-3">
+              <button onClick={onEdit} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-accent">
+                <Pencil className="h-3 w-3" /> Edit ability
+              </button>
+              {isCustom && (
+                <button onClick={onDeleteCustom} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-3 w-3" /> Remove from registry
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -360,6 +384,77 @@ function AddAbilityForm({ onSaved }: { onSaved: () => void }) {
       <div className="flex gap-2 sm:col-span-2">
         <Button size="sm" onClick={() => void submit()} disabled={busy || !label.trim()}>{busy ? "Saving…" : "Add to registry"}</Button>
         <Button size="sm" variant="ghost" onClick={onSaved}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
+/** Admin edit form — writes an override (name/tier/color/description) for any ability. */
+function EditAbilityForm({ def, onClose, onSaved }: { def: AbilityDef; onClose: () => void; onSaved: () => void }) {
+  const [label, setLabel] = useState(def.label);
+  const [tier, setTier] = useState<AbilityTier>(def.tier);
+  const [color, setColor] = useState(def.color);
+  const [description, setDescription] = useState(def.description ?? "");
+  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
+
+  const submit = async (reset: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const override: AbilityOverride = reset
+        ? {}
+        : {
+            ...(label.trim() && label.trim() !== def.label ? { label: label.trim() } : {}),
+            ...(tier !== def.tier ? { tier } : {}),
+            ...(color !== def.color ? { color } : {}),
+            ...(description.trim() ? { description: description.trim() } : {}),
+          };
+      if (reset) removeAbilityOverride(def.key); else saveAbilityOverride(def.key, override);
+      const merged = { ...(getAbilityOverrides()[normalizeAbilityKey(def.key)] ?? {}), ...(reset ? {} : override) };
+      void merged;
+      // Mirror overrides map to app_settings so other devices see the same ranks.
+      const all = getAbilityOverrides();
+      const { error } = await supabase.from("app_settings").upsert({ key: OVERRIDES_SETTINGS_KEY, value: all as unknown as Json, updated_at: new Date().toISOString() });
+      if (error) throw error;
+      toast.success(reset ? `"${def.label}" reset to registry defaults.` : `"${label || def.label}" updated.`);
+      void qc.invalidateQueries({ queryKey: ["app-settings"] });
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save ability.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="glass mb-6 grid gap-3 rounded-2xl border border-accent/30 p-4 sm:grid-cols-2">
+      <p className="text-xs font-medium text-accent sm:col-span-2">Editing: {def.label} <span className="text-muted-foreground">({def.key})</span></p>
+      <div className="grid gap-1.5 sm:col-span-2">
+        <Label>Display name</Label>
+        <Input value={label} onChange={(e) => setLabel(e.target.value)} className="h-9" />
+      </div>
+      <div className="grid gap-1.5">
+        <Label>Rarity tier</Label>
+        <select value={tier} onChange={(e) => setTier(e.target.value as AbilityTier)} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+          {TIER_ORDER.map((t) => <option key={t} value={t}>{TIER_LABELS[t]}</option>)}
+        </select>
+      </div>
+      <div className="grid gap-1.5">
+        <Label>Glow color</Label>
+        <div className="flex items-center gap-2">
+          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded border border-input bg-background" />
+          <Input value={color} onChange={(e) => setColor(e.target.value)} className="h-9 font-mono text-xs" />
+        </div>
+      </div>
+      <div className="grid gap-1.5 sm:col-span-2">
+        <Label>Description / usage context</Label>
+        <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="How this character wields it in battle" className="h-9" />
+      </div>
+      <div className="flex flex-wrap gap-2 sm:col-span-2">
+        <Button size="sm" onClick={() => void submit(false)} disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button>
+        <Button size="sm" variant="ghost" onClick={() => void submit(true)} disabled={busy}>Reset to defaults</Button>
+        <Button size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
       </div>
     </div>
   );

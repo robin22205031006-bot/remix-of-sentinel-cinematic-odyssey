@@ -196,6 +196,43 @@ export function removeCustomAbility(key: string) {
   } catch { /* storage optional */ }
 }
 
+// ---- Admin overrides: edit name/tier/color/description of ANY ability ----
+const OVERRIDE_STORAGE_KEY = "scu_ability_overrides";
+
+/** Partial def applied on top of the resolved registry/custom ability. */
+export type AbilityOverride = Partial<Omit<AbilityDef, "key">>;
+
+export function getAbilityOverrides(): Record<string, AbilityOverride> {
+  try {
+    const raw = localStorage.getItem(OVERRIDE_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveAbilityOverride(key: string, override: AbilityOverride) {
+  const map = getAbilityOverrides();
+  map[normalizeAbilityKey(key)] = override;
+  try {
+    localStorage.setItem(OVERRIDE_STORAGE_KEY, JSON.stringify(map));
+  } catch { /* storage optional */ }
+}
+
+export function removeAbilityOverride(key: string) {
+  const map = getAbilityOverrides();
+  delete map[normalizeAbilityKey(key)];
+  try {
+    localStorage.setItem(OVERRIDE_STORAGE_KEY, JSON.stringify(map));
+  } catch { /* storage optional */ }
+}
+
+function applyOverride(def: AbilityDef): AbilityDef {
+  const o = getAbilityOverrides()[normalizeAbilityKey(def.key)];
+  return o ? { ...def, ...o } : def;
+}
+
 /** Registry + admin-defined customs, for pickers and the Abilities Hub. */
 export function allAbilityDefs(): AbilityDef[] {
   return [...ABILITY_REGISTRY, ...getCustomAbilities()];
@@ -222,9 +259,9 @@ export function lookupAbility(name: string): AbilityDef | null {
   const key = normalizeAbilityKey(trimmed);
   refreshCustomMaps();
   const direct = BY_LABEL.get(lower) ?? BY_KEY.get(key) ?? CUSTOM_LABEL.get(lower) ?? CUSTOM_KEY.get(key);
-  if (direct) return direct;
   const alias = ALIASES[key];
-  return alias ? BY_KEY.get(alias) ?? null : null;
+  const base = direct ?? (alias ? BY_KEY.get(alias) ?? null : null);
+  return base ? applyOverride(base) : null;
 }
 
 /** Fallback definition for custom abilities not in the registry. */

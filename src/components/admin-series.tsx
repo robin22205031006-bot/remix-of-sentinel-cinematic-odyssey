@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { entitiesQuery, fileToDataUrl, matchesSearch, type Entity } from "@/lib/entities";
 import { SERIES_STATUSES, seriesCharactersQuery, seriesMembersQuery, seriesQuery, seriesStatusClass, type Series, type SeriesCharacter } from "@/lib/series";
+import { CARD_THEMES } from "./ability-canvas";
 import { sfx } from "@/lib/scu-audio";
 
 interface SeriesForm {
@@ -315,6 +316,16 @@ function SeriesMembers({ series }: { series: Series }) {
                 aria-label={`Status of ${c.name} in ${series.title}`}
               >
                 {statusOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select
+                value={row.card_theme ?? ""}
+                onChange={(e) => update(row, { card_theme: e.target.value || null })}
+                className="h-7 rounded-md border bg-background px-1.5 text-xs"
+                aria-label={`Card theme of ${c.name} in ${series.title}`}
+                title="Live card theme for this season"
+              >
+                <option value="">Auto theme</option>
+                {CARD_THEMES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
               <Input
                 placeholder="Role / arc note"

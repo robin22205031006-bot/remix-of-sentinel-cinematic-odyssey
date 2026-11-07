@@ -13,6 +13,7 @@ import { CHARACTER_STATUSES, GROUP_LINK_KINDS, GROUP_STATUSES, RELATIONSHIP_LABE
 import { COMBAT_STATS, getCombatStats, splitStats, type CombatStats } from "@/lib/combat-stats";
 import { mergeLocks } from "@/lib/lore-merge";
 import { AbilityPicker } from "./ability-picker";
+import { CARD_THEMES } from "./ability-canvas";
 import { ANIMATION_LABELS, ANIMATION_STYLES, CHARACTER_TIERS } from "@/lib/character-tier";
 
 type Kind = Entity["kind"];
@@ -59,6 +60,7 @@ export function EntityDialog({
     theme_color: entity?.theme_color ?? "",
     accent_glow: entity?.accent_glow ?? "",
     theme_song_url: entity?.theme_song_url ?? "",
+    card_theme: entity?.card_theme ?? "",
   });
   const [relTarget, setRelTarget] = useState("");
   const [relType, setRelType] = useState<string>(RELATIONSHIP_TYPES[0]);
@@ -139,6 +141,7 @@ export function EntityDialog({
             theme_color: form.theme_color || null,
             accent_glow: form.accent_glow || null,
             theme_song_url: form.theme_song_url || null,
+            card_theme: form.card_theme || null,
           }
         : {}),
     };
@@ -264,6 +267,18 @@ export function EntityDialog({
                 >
                   {ANIMATION_STYLES.map((s) => <option key={s} value={s}>{ANIMATION_LABELS[s]}</option>)}
                 </select>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Card live theme</Label>
+                <select
+                  className="h-9 rounded-md border bg-background px-3 text-sm"
+                  value={form.card_theme}
+                  onChange={(e) => setForm({ ...form, card_theme: e.target.value })}
+                >
+                  <option value="">Auto (from abilities)</option>
+                  {CARD_THEMES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+                </select>
+                <p className="text-xs text-muted-foreground">Overrides the animated card/dossier background — pick the character's signature element.</p>
               </div>
               <div className="grid gap-1.5">
                 <Label>Theme song</Label>

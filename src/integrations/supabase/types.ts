@@ -183,6 +183,7 @@ export type Database = {
           alias: string | null
           animation_style: string | null
           beast_traits: string[]
+          card_theme: string | null
           category: string | null
           character_tier: string | null
           created_at: string
@@ -207,6 +208,7 @@ export type Database = {
           alias?: string | null
           animation_style?: string | null
           beast_traits?: string[]
+          card_theme?: string | null
           category?: string | null
           character_tier?: string | null
           created_at?: string
@@ -231,6 +233,7 @@ export type Database = {
           alias?: string | null
           animation_style?: string | null
           beast_traits?: string[]
+          card_theme?: string | null
           category?: string | null
           character_tier?: string | null
           created_at?: string
@@ -646,6 +649,7 @@ export type Database = {
       }
       series_characters: {
         Row: {
+          card_theme: string | null
           character_id: string
           created_at: string
           id: string
@@ -654,6 +658,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          card_theme?: string | null
           character_id: string
           created_at?: string
           id?: string
@@ -662,6 +667,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          card_theme?: string | null
           character_id?: string
           created_at?: string
           id?: string

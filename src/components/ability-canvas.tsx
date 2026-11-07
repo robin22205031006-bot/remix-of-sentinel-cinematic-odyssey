@@ -52,7 +52,20 @@ function useCanvasLoop(draw: (ctx: CanvasRenderingContext2D, w: number, h: numbe
 
 /* ---------------------------------- themes --------------------------------- */
 
-type ThemeKey = "wind" | "water" | "fire" | "storm" | "void" | "celestial" | "default";
+export type ThemeKey = "wind" | "water" | "fire" | "storm" | "void" | "celestial" | "beast" | "blood" | "ice" | "tech" | "default";
+
+export const CARD_THEMES: Array<{ key: ThemeKey; label: string }> = [
+  { key: "wind", label: "Wind / Tempest" },
+  { key: "water", label: "Water / Tide" },
+  { key: "fire", label: "Fire / Inferno" },
+  { key: "storm", label: "Lightning / Kinetic" },
+  { key: "void", label: "Shadow / Void" },
+  { key: "celestial", label: "Celestial / Holy" },
+  { key: "beast", label: "Beast / Morph" },
+  { key: "blood", label: "Blood / Crimson" },
+  { key: "ice", label: "Ice / Frost" },
+  { key: "tech", label: "Tech / Arcane" },
+];
 
 const THEME_BY_KEYWORD: Array<[RegExp, ThemeKey]> = [
   [/wind|aero|tempest|gale|storm.?front/i, "wind"],
@@ -70,12 +83,24 @@ const PALETTES: Record<ThemeKey, string[]> = {
   storm: ["#a855f7", "#eab308", "#f5f3ff"],
   void: ["#1e1b4b", "#7c3aed", "#e9d5ff"],
   celestial: ["#fbbf24", "#ffffff", "#fde68a"],
+  beast: ["#f97316", "#fbbf24", "#dc2626"],
+  blood: ["#dc2626", "#7f1d1d", "#fca5a5"],
+  ice: ["#7dd3fc", "#e0f2fe", "#38bdf8"],
+  tech: ["#22d3ee", "#a78bfa", "#67e8f9"],
   default: ["#818cf8", "#c4b5fd", "#e0e7ff"],
 };
 
+const THEME_KEYWORDS: Array<[RegExp, ThemeKey]> = [
+  ...THEME_BY_KEYWORD,
+  [/beast|morph|animal|tiger|wolf|dragon.?kin|feral/i, "beast"],
+  [/blood|hemokin|crimson|vampire/i, "blood"],
+  [/ice|cryo|frost|freeze|glacier/i, "ice"],
+  [/tech|cyber|mech|android|nano|plasma.?tech/i, "tech"],
+];
+
 function pickTheme(abilities: string[] | undefined): ThemeKey {
   const text = (abilities ?? []).map((a) => abilityDef(a)?.label ?? a).join(" ");
-  for (const [re, theme] of THEME_BY_KEYWORD) if (re.test(text)) return theme;
+  for (const [re, theme] of THEME_KEYWORDS) if (re.test(text)) return theme;
   return "default";
 }
 
@@ -83,13 +108,16 @@ function pickTheme(abilities: string[] | undefined): ThemeKey {
 
 interface Props {
   abilities?: string[];
+  /** Admin override — explicit theme key wins over ability-derived theme. */
+  theme?: string | null;
   className?: string;
   /** particle count multiplier */
   density?: number;
 }
 
-export function AbilityCardCanvas({ abilities, className, density = 1 }: Props) {
-  const theme = pickTheme(abilities);
+export function AbilityCardCanvas({ abilities, theme: themeOverride, className, density = 1 }: Props) {
+  const derived = pickTheme(abilities);
+  const theme: ThemeKey = (themeOverride && themeOverride in PALETTES ? themeOverride : derived) as ThemeKey;
   const colors = PALETTES[theme];
   const mouse = useRef({ x: -9999, y: -9999, down: false });
 

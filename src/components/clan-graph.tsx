@@ -122,7 +122,7 @@ export function ClanGraph() {
       arr.push(c);
       map.set(m.group_id, arr);
     }
-    for (const arr of map.values()) arr.sort((a, b) => a.name.localeCompare(b.name));
+    for (const arr of map.values()) arr.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
     return map;
   }, [memberships, byId]);
 
@@ -349,7 +349,7 @@ export function ClanGraph() {
                   )}
                   <rect x={-r} y={r - 6} width={r * 2} height={11} rx={5.5} fill="#000" opacity={0.72} />
                   <text y={r + 2} textAnchor="middle" fontSize={8.5} fill="#e4e4e7" letterSpacing={0.4}>
-                    {e.name.length > 16 ? `${e.name.slice(0, 15)}…` : e.name}
+                    {(e.name ?? "").length > 16 ? `${(e.name ?? "").slice(0, 15)}…` : (e.name ?? "")}
                   </text>
                   <circle cx={r - 4} cy={-r + 4} r={4.5} fill={statusDot(e.status)} stroke="#000" strokeWidth={1} />
                 </g>

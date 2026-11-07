@@ -34,7 +34,8 @@ const IMPACT_TIERS = [
   { label: "Catastrophic", value: 10, color: "#ef4444" },
 ] as const;
 
-function impactTier(v: number) {
+function impactTier(raw: number | null | undefined) {
+  const v = Number.isFinite(raw) ? (raw as number) : 5;
   return IMPACT_TIERS.reduce((best, t) => (Math.abs(t.value - v) < Math.abs(best.value - v) ? t : best));
 }
 

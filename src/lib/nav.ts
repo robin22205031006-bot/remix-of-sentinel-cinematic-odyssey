@@ -3,6 +3,10 @@ export const TABS = [
   { to: "/characters", label: "Characters", icon: "chars" },
   { to: "/abilities", label: "Abilities", icon: "abilities" },
   { to: "/archive", label: "Archive", icon: "archive" },
+  { to: "/map", label: "Map", icon: "map" },
+  { to: "/fandom", label: "Fandom", icon: "fandom" },
+  { to: "/ai", label: "AI Box", icon: "ai" },
+  { to: "/vault", label: "Vault", icon: "vault" },
 ] as const;
 
 export const STAFF_TAB = { to: "/admin", label: "Admin", icon: "admin" } as const;

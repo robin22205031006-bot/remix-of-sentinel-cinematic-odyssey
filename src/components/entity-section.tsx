@@ -21,6 +21,7 @@ import { EntityDialog } from "./entity-dialog";
 import { EntityGridSkeleton } from "./route-skeleton";
 import { EntityLinks } from "./entity-links";
 import { SeriesAppearances } from "./series-appearances";
+import { characterSeriesQuery } from "@/lib/series";
 import { MergeEntityDialog } from "./merge-entity-dialog";
 import { SketchGallery } from "./sketch-gallery";
 import { StatRadar } from "./stat-radar";
@@ -125,7 +126,12 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
   const combat = e.kind === "character" ? getCombatStats(e.stats) : null;
   const [comparing, setComparing] = useState(false);
-  const [dossierTab, setDossierTab] = useState<"lore" | "powers" | "bonds">("lore");
+  const [dossierTab, setDossierTab] = useState<"lore" | "powers" | "bonds" | "progress">("lore");
+  const [seasonIdx, setSeasonIdx] = useState(0);
+  const { data: seriesRows } = useQuery({ ...characterSeriesQuery(e.id), enabled: e.kind === "character" });
+  const seasons = (seriesRows ?? []).filter((r) => r.series);
+  const SEASON_HUES = [262, 200, 150, 20, 340, 90, 180];
+  const seasonHue = seasonIdx >= 0 && seasons.length ? SEASON_HUES[seasonIdx % SEASON_HUES.length] : null;
   const [abilityInfo, setAbilityInfo] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [style, setStyle] = useState<CSSProperties>({});
@@ -202,15 +208,72 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
       onClick={onClose}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
+      style={(seasonHue ? { boxShadow: `inset 0 0 140px hsl(${seasonHue} 85% 55% / .14)` } : {}) as MotionStyle}
     >
-      <div className="mx-auto grid max-w-5xl gap-5 px-4 pb-16 pt-24 sm:grid-cols-[17rem_1fr] sm:px-6 sm:pt-26" onClick={(ev) => ev.stopPropagation()}>
-        <div className="corner-shift glass glow-ring h-fit rounded-2xl rounded-tl-[2rem] p-4 sm:sticky sm:top-26" style={style}>
-          <Avatar e={e} size="h-40 w-full" />
-          <div className="mt-3"><CardBody e={e} showKind /></div>
-        </div>
-        <section className="morph-in glass grid gap-6 rounded-2xl p-5 text-sm leading-relaxed sm:p-7">
-          <div className="flex items-start justify-between">
-            <h3 className="flex items-center gap-2 text-4xl font-medium glow-text">
+      <div className="mx-auto grid max-w-[90rem] lg:grid-cols-[14rem_minmax(0,1fr)_4.5rem]" onClick={(ev) => ev.stopPropagation()}>
+        {/* Column 1 — vertical thumbnail rail */}
+        <aside className="hidden flex-col border-r border-white/10 bg-black/40 p-3 lg:flex">
+          <p className="mb-3 px-1 font-display text-lg tracking-widest text-accent">SCU</p>
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+            {/* Overview thumb */}
+            <button
+              onClick={() => setSeasonIdx(-1)}
+              className={`flex items-center gap-2 rounded-lg border p-2 text-left transition-all ${seasonIdx === -1 ? "border-accent/70 bg-white/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+              style={seasonIdx === -1 ? { borderLeft: "3px solid var(--accent)", boxShadow: "0 0 14px color-mix(in oklab, var(--accent) 30%, transparent)" } : {}}
+            >
+              <span className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary">
+                {e.image_url ? <img src={e.image_url} alt="" className="h-full w-full object-cover" /> : <Avatar e={e} size="h-10 w-10" />}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-xs font-semibold uppercase tracking-wide">{e.name}</span>
+                <span className="block text-[9px] uppercase text-muted-foreground">Overview</span>
+              </span>
+            </button>
+            {seasons.map((r, i) => {
+              const hue = SEASON_HUES[i % SEASON_HUES.length];
+              const active = i === seasonIdx;
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => setSeasonIdx(i)}
+                  className={`flex items-center gap-2 rounded-lg border p-2 text-left transition-all ${active ? "bg-white/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                  style={{ borderLeft: `3px solid hsl(${hue} 85% 60%)`, ...(active ? { boxShadow: `0 0 14px hsl(${hue} 85% 60% / .3)` } : {}) }}
+                >
+                  <span className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary">
+                    {r.series?.cover_image_url ? (
+                      <img src={r.series.cover_image_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="grid h-full w-full place-items-center text-[9px] uppercase text-muted-foreground">{r.series?.title?.slice(0, 2)}</span>
+                    )}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-semibold uppercase tracking-wide">{r.series?.title}</span>
+                    {r.status && <span className="block text-[9px] uppercase" style={{ color: `hsl(${hue} 85% 65%)` }}>{r.status}</span>}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+        {/* Mobile season chips fallback */}
+        {seasons.length > 0 && (
+          <div className="flex gap-1.5 overflow-x-auto border-b border-white/10 px-4 py-2 lg:hidden">
+            <button onClick={() => setSeasonIdx(-1)} className={`shrink-0 rounded-full px-3 py-1 text-[10px] uppercase ${seasonIdx === -1 ? "bg-accent text-accent-foreground" : "bg-white/10 text-muted-foreground"}`}>Overview</button>
+            {seasons.map((r, i) => (
+              <button key={r.id} onClick={() => setSeasonIdx(i)} className={`shrink-0 rounded-full px-3 py-1 text-[10px] uppercase ${seasonIdx === i ? "bg-accent text-accent-foreground" : "bg-white/10 text-muted-foreground"}`}>{r.series?.title}</button>
+            ))}
+          </div>
+        )}
+        <section className="morph-in relative grid content-start gap-6 p-5 text-sm leading-relaxed sm:p-7 lg:p-10">
+          {/* Hero render — right side, rim-lit by active accent */}
+          {e.image_url && (
+            <div className="pointer-events-none absolute right-0 top-0 hidden h-full w-[38%] items-end justify-center overflow-hidden lg:flex" aria-hidden>
+              <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 80%, ${seasonHue ? `hsl(${seasonHue} 85% 55% / .22)` : "var(--accent)"} 0%, transparent 65%)` }} />
+              <img src={e.image_url} alt={e.name} className="relative h-[86%] w-auto max-w-full object-contain object-bottom [mask-image:linear-gradient(to_top,black_55%,transparent_98%)]" />
+            </div>
+          )}
+          <div className="relative flex items-start justify-between gap-4">
+            <h3 className="flex flex-wrap items-center gap-3 font-display text-5xl font-black uppercase leading-[0.95] tracking-tight text-white sm:text-6xl lg:max-w-[55%]" style={{ textShadow: `0 0 30px ${seasonHue ? `hsl(${seasonHue} 85% 60% / .45)` : "var(--accent)"}66` }}>
             {e.name}
             {tierDef(e.character_tier) && (
               <span
@@ -259,9 +322,9 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
               <button aria-label="Close" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full bg-secondary"><X className="h-4 w-4" /></button>
             </div>
           </div>
-          {/* Dossier tabs: Lore / Powers / Bonds */}
-          <div className="flex gap-1.5" role="tablist">
-            {([["lore", "Lore"], ["powers", "Powers"], ["bonds", "Bonds & Series"]] as const).map(([t, label]) => (
+          {/* Tabs — horizontal on mobile, moved to right edge rail on desktop */}
+          <div className="flex gap-1.5 lg:hidden" role="tablist">
+            {([["lore", "Lore"], ["powers", "Powers"], ["bonds", "Bonds & Series"], ["progress", "Progress"]] as const).map(([t, label]) => (
               <button
                 key={t}
                 role="tab"
@@ -316,6 +379,41 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           {dossierTab === "bonds" && e.kind !== "character" && <OrgHierarchy entity={e} onOpen={onOpen} />}
           {dossierTab === "bonds" && e.kind === "character" && <SeriesAppearances entity={e} />}
           {dossierTab === "bonds" && e.kind === "character" && <CompareSentinel open={comparing} onOpenChange={setComparing} entity={e} />}
+          {dossierTab === "progress" && (
+            <div className="grid gap-4">
+              <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Ability progress by season</h4>
+              {seasons.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No series data for this character.</p>
+              ) : (
+                seasons.map((r, i) => {
+                  const hue = SEASON_HUES[i % SEASON_HUES.length];
+                  return (
+                    <div key={r.id} className="rounded-xl border border-border/60 bg-secondary/20 p-4">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: `hsl(${hue} 85% 60%)` }} />
+                        <span className="font-medium">{r.series?.title}</span>
+                        {r.status && <span className="text-[10px] uppercase text-muted-foreground">{r.status}</span>}
+                      </div>
+                      {r.role_in_series && <p className="mb-2 text-xs text-muted-foreground">{r.role_in_series}</p>}
+                      {/* Per-season ability progression has no dedicated table yet. */}
+                      <p className="text-xs italic text-muted-foreground">No database for this season.</p>
+                    </div>
+                  );
+                })
+              )}
+              <div className="rounded-xl border border-border/60 bg-secondary/20 p-4">
+                <h4 className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Combat role</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {[e.role, e.category, ...(e.abilities ?? []).filter((a) => abilityDef(a).group === "role")].filter(Boolean).map((t) => (
+                    <span key={t} className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">{t}</span>
+                  ))}
+                  {!e.role && !e.category && (e.abilities ?? []).filter((a) => abilityDef(a).group === "role").length === 0 && (
+                    <span className="text-xs text-muted-foreground">No role classified.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           {dossierTab === "lore" && notes && notes.length > 0 && (
             <div className="grid gap-3">
               <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Lore notes</h4>
@@ -328,6 +426,36 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             </div>
           )}
         </section>
+        {/* Column 3 — right-edge vertical tab strip */}
+        <nav className="sticky top-24 hidden h-fit flex-col items-stretch gap-1 self-start border-l border-white/10 bg-black/40 py-4 lg:flex" aria-label="Dossier sections">
+          {([["lore", "Lore"], ["powers", "Powers"], ["bonds", "Bonds"], ["progress", "Progress"]] as const).map(([t, label], i) => {
+            const active = dossierTab === t;
+            const accent = seasonHue ? `hsl(${seasonHue} 85% 60%)` : "var(--accent)";
+            return (
+              <button
+                key={t}
+                role="tab"
+                aria-selected={active}
+                aria-label={label}
+                title={label}
+                onClick={() => setDossierTab(t)}
+                className="group relative flex h-16 items-center justify-center"
+              >
+                <span
+                  className="absolute left-0 top-1/2 h-8 w-[3px] -translate-y-1/2 rounded-r transition-all"
+                  style={{ background: active ? accent : "rgba(255,255,255,.15)", boxShadow: active ? `0 0 10px ${accent}` : undefined }}
+                />
+                <span
+                  className="text-[10px] font-bold uppercase tracking-[0.2em] transition-colors"
+                  style={{ writingMode: "vertical-rl", color: active ? accent : "rgba(255,255,255,.45)" }}
+                >
+                  {label}
+                </span>
+                <span className="pointer-events-none absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full border border-white/15 bg-black/60 text-[8px] text-muted-foreground transition-colors group-hover:text-foreground" style={active ? { borderColor: accent, color: accent } : {}}>{i + 1}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
       <AbilityInfoDialog name={abilityInfo} wielder={e.name} onClose={() => setAbilityInfo(null)} />
     </motion.div>

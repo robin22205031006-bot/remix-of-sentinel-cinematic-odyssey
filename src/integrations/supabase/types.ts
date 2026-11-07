@@ -612,21 +612,33 @@ export type Database = {
         Row: {
           cover_image_url: string | null
           description: string
+          genres: string[]
           id: string
+          season_count: number | null
+          season_names: string[]
+          timeline_note: string | null
           title: string
           updated_at: string
         }
         Insert: {
           cover_image_url?: string | null
           description?: string
+          genres?: string[]
           id?: string
+          season_count?: number | null
+          season_names?: string[]
+          timeline_note?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           cover_image_url?: string | null
           description?: string
+          genres?: string[]
           id?: string
+          season_count?: number | null
+          season_names?: string[]
+          timeline_note?: string | null
           title?: string
           updated_at?: string
         }

@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { entitiesQuery, fileToDataUrl, matchesSearch, type Entity } from "@/lib/entities";
@@ -19,9 +20,25 @@ interface SeriesForm {
   title: string;
   description: string;
   cover_image_url: string;
+  genres: string[];
+  season_count: string;
+  season_names: string;
+  timeline_note: string;
 }
 
-const EMPTY_FORM: SeriesForm = { title: "", description: "", cover_image_url: "" };
+const GENRE_PRESETS = ["Superhero", "Sci-Fi", "Thriller", "Drama", "Action", "Horror", "Mystery", "Fantasy", "Cyberpunk", "Noir", "Mecha", "Urban Fantasy"];
+const ROLE_SUGGESTIONS = ["Lead", "Antagonist", "Protagonist", "Debut", "Supporting", "Anti-hero", "Mentor", "Victim", "Survivor"];
+
+const EMPTY_FORM: SeriesForm = { title: "", description: "", cover_image_url: "", genres: [], season_count: "", season_names: "", timeline_note: "" };
+const toForm = (s: Series): SeriesForm => ({
+  title: s.title,
+  description: s.description,
+  cover_image_url: s.cover_image_url ?? "",
+  genres: s.genres ?? [],
+  season_count: s.season_count?.toString() ?? "",
+  season_names: (s.season_names ?? []).join(", "),
+  timeline_note: s.timeline_note ?? "",
+});
 
 function SeriesFormDialog({
   open, onOpenChange, series,
@@ -31,19 +48,23 @@ function SeriesFormDialog({
   series: Series | null;
 }) {
   const qc = useQueryClient();
-  const [form, setForm] = useState<SeriesForm>(() =>
-    series ? { title: series.title, description: series.description, cover_image_url: series.cover_image_url ?? "" } : EMPTY_FORM,
-  );
+  const [form, setForm] = useState<SeriesForm>(() => (series ? toForm(series) : EMPTY_FORM));
+  const [genreDraft, setGenreDraft] = useState("");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     if (!form.title.trim()) return;
     setSaving(true);
     try {
+      const seasonCount = form.season_count.trim() ? Math.max(0, parseInt(form.season_count, 10) || 0) : null;
       const payload = {
         title: form.title.trim(),
         description: form.description,
         cover_image_url: form.cover_image_url || null,
+        genres: form.genres,
+        season_count: seasonCount,
+        season_names: form.season_names.split(",").map((s) => s.trim()).filter(Boolean),
+        timeline_note: form.timeline_note.trim() || null,
         updated_at: new Date().toISOString(),
       };
       const { error } = series
@@ -73,6 +94,59 @@ function SeriesFormDialog({
         <div className="grid gap-3 text-sm">
           <Input placeholder="Series title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass h-10 rounded-full" />
           <Textarea placeholder="Description / arc summary" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="glass rounded-xl" />
+          <div className="grid gap-1.5">
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground">Genres</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {[...GENRE_PRESETS, ...form.genres.filter((g) => !GENRE_PRESETS.includes(g))].map((g) => {
+                const on = form.genres.includes(g);
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, genres: on ? f.genres.filter((x) => x !== g) : [...f.genres, g] }))}
+                    className={`rounded-full border px-2.5 py-1 text-xs ${on ? "border-accent bg-accent/15 text-accent" : "text-muted-foreground hover:border-foreground/40"}`}
+                  >
+                    {g}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add custom genre…"
+                value={genreDraft}
+                onChange={(e) => setGenreDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && genreDraft.trim()) {
+                    e.preventDefault();
+                    const g = genreDraft.trim();
+                    if (!form.genres.includes(g)) setForm((f) => ({ ...f, genres: [...f.genres, g] }));
+                    setGenreDraft("");
+                  }
+                }}
+                className="glass h-8 rounded-full text-xs"
+              />
+              <Button type="button" size="sm" variant="secondary" className="h-8" onClick={() => {
+                const g = genreDraft.trim();
+                if (g && !form.genres.includes(g)) setForm((f) => ({ ...f, genres: [...f.genres, g] }));
+                setGenreDraft("");
+              }}>Add</Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1.5">
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground">Seasons</Label>
+              <Input type="number" min={0} placeholder="e.g. 5" value={form.season_count} onChange={(e) => setForm({ ...form, season_count: e.target.value })} className="glass h-9 rounded-full text-xs" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground">Season names</Label>
+              <Input placeholder="comma-separated" value={form.season_names} onChange={(e) => setForm({ ...form, season_names: e.target.value })} className="glass h-9 rounded-full text-xs" />
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground">Timeline note</Label>
+            <Textarea placeholder="Where this arc sits in the SCU timeline…" value={form.timeline_note} onChange={(e) => setForm({ ...form, timeline_note: e.target.value })} rows={2} className="glass rounded-xl text-xs" />
+          </div>
           <div className="grid gap-2">
             <label className="text-xs uppercase tracking-widest text-muted-foreground">Cover image</label>
             <div className="flex items-center gap-3">
@@ -239,6 +313,7 @@ function SeriesMembers({ series }: { series: Series }) {
               </select>
               <Input
                 placeholder="Role / arc note"
+                list={`series-roles-${series.id}`}
                 defaultValue={row.role_in_series ?? ""}
                 onBlur={(e) => {
                   const v = e.target.value.trim();
@@ -246,6 +321,9 @@ function SeriesMembers({ series }: { series: Series }) {
                 }}
                 className="glass h-7 w-40 rounded-md px-2 text-xs"
               />
+              <datalist id={`series-roles-${series.id}`}>
+                {ROLE_SUGGESTIONS.map((r) => <option key={r} value={r} />)}
+              </datalist>
               <button aria-label={`Remove ${c.name} from ${series.title}`} onClick={() => remove(row)} className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:text-destructive">
                 <X className="h-3.5 w-3.5" />
               </button>

@@ -6,13 +6,14 @@ import type { Entity } from "@/lib/entities";
 export type Series = Tables<"series">;
 export type SeriesCharacter = Tables<"series_characters">;
 
-export const SERIES_STATUSES = ["Alive", "Dead", "Missing", "Unknown"] as const;
+export const SERIES_STATUSES = ["Alive", "Dead", "Presumed Dead", "Missing", "Unknown"] as const;
 export type SeriesStatus = (typeof SERIES_STATUSES)[number];
 
 export const seriesStatusClass: Record<string, string> = {
   Alive: "text-status-alive",
   Dead: "text-status-dead",
   Missing: "text-status-legend",
+  "Presumed Dead": "text-status-legend",
   Unknown: "text-status-neutral",
 };
 

@@ -107,6 +107,60 @@ function ready(fn: () => void): void {
   }
 }
 
+// ---- Ambient drone (low-pitch background atmosphere) ----
+let ambientNodes: { osc: OscillatorNode; gain: GainNode }[] | null = null;
+
+export function ambientPlaying(): boolean {
+  return ambientNodes !== null;
+}
+
+export function ambientStart() {
+  if (ambientNodes || isMuted()) return;
+  const c = ac();
+  if (!c) return;
+  try {
+    const mk = (freq: number, type: OscillatorType, vol: number) => {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = 0;
+      gain.gain.linearRampToValueAtTime(vol, c.currentTime + 2.5);
+      osc.connect(gain).connect(c.destination);
+      osc.start();
+      return { osc, gain };
+    };
+    ambientNodes = [
+      mk(55, "sine", 0.035),
+      mk(82.4, "sine", 0.022),
+      mk(110, "triangle", 0.012),
+    ];
+    // Slow breathing LFO on the master-ish gain.
+    const lfo = c.createOscillator();
+    const lfoGain = c.createGain();
+    lfo.frequency.value = 0.08;
+    lfoGain.gain.value = 0.012;
+    lfo.connect(lfoGain);
+    for (const n of ambientNodes) lfoGain.connect(n.gain.gain);
+    lfo.start();
+    ambientNodes.push({ osc: lfo, gain: lfoGain });
+  } catch {
+    ambientNodes = null;
+  }
+}
+
+export function ambientStop() {
+  if (!ambientNodes) return;
+  const c = ctx;
+  for (const n of ambientNodes) {
+    try {
+      n.gain.gain.linearRampToValueAtTime(0, (c?.currentTime ?? 0) + 0.8);
+      n.osc.stop((c?.currentTime ?? 0) + 1);
+    } catch { /* already stopped */ }
+  }
+  ambientNodes = null;
+}
+
 export const sfx = {
   /** Subtle tactical tick for buttons, tabs, and generic presses. */
   click() {

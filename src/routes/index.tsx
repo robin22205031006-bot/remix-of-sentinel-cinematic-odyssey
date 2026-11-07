@@ -43,6 +43,28 @@ function Index() {
       <div className="mt-16">
         <SeriesPage />
       </div>
+
+      <footer className="mt-20 border-t border-border pt-8">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <h3 className="text-[11px] uppercase tracking-[0.25em] text-accent">Credits</h3>
+            <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+              <li><span className="text-foreground">Developer</span> — Robin (SCU Archives engineering)</li>
+              <li><span className="text-foreground">Admin</span> — zananrobin@gmail.com</li>
+              <li><span className="text-foreground">Editors</span> — Lore ingestion &amp; canon review team</li>
+              <li><span className="text-foreground">Contributors</span> — The SCU fandom archivists</li>
+            </ul>
+          </div>
+          <div className="flex flex-col justify-end">
+            <p className="font-display text-lg italic text-muted-foreground">
+              “In the silence between heartbeats, the Sentinel remembers.”
+            </p>
+            <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-muted-foreground/60">
+              SCU Easter Egg — Season 5: The Last Archive awakens when all five seals align.
+            </p>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

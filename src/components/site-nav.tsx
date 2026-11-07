@@ -1,12 +1,14 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, BookMarked, Bot, Castle, Clock, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Network, Shield, Sparkles, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
+import { Archive, BookMarked, Bot, Castle, Clock, EyeOff, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Music, Network, Shield, Sparkles, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useIsStaff, useSession } from "@/hooks/use-admin";
 import { useScuMute } from "@/hooks/use-scu-audio";
 import { useAppearance } from "@/hooks/use-appearance";
 import { supabase } from "@/integrations/supabase/client";
 import { STAFF_TAB, TABS, tabIndex } from "@/lib/nav";
+import { ambientPlaying, ambientStart, ambientStop } from "@/lib/scu-audio";
+import { onSpoilerChange, setSpoilersHidden, spoilersHidden } from "@/lib/spoiler";
 import { DayNightToggle } from "./day-night-toggle";
 import { ThemeDrawer } from "./theme-drawer";
 import { UniversalSearch } from "./universal-search";
@@ -17,6 +19,13 @@ export function SiteNav() {
   const isStaff = useIsStaff();
   const { data: user } = useSession();
   const { muted, toggleMute } = useScuMute();
+  const [ambient, setAmbient] = useState(false);
+  const [hideSpoilers, setHideSpoilers] = useState(spoilersHidden);
+  useEffect(() => onSpoilerChange(() => setHideSpoilers(spoilersHidden())), []);
+  const toggleAmbient = () => {
+    if (ambientPlaying() || ambient) { ambientStop(); setAmbient(false); }
+    else { ambientStart(); setAmbient(true); }
+  };
   const { zoom } = useAppearance();
   const qc = useQueryClient();
   const nav = useNavigate();
@@ -60,7 +69,7 @@ export function SiteNav() {
       const t = e.changedTouches[0];
       if (!t) return;
       const dx = t.clientX - sx, dy = t.clientY - sy;
-      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+      if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
       const next = tabs[active + (dx < 0 ? 1 : -1)];
       if (active >= 0 && next) nav({ to: next.to });
     };
@@ -93,6 +102,7 @@ export function SiteNav() {
               <Link
                 key={t.to}
                 to={t.to}
+                preload="intent"
                 ref={(el) => { refs.current[i] = el; }}
                 className={`relative flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${on ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
@@ -116,6 +126,22 @@ export function SiteNav() {
           className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"
         >
           {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+        </button>
+        <button
+          aria-label={ambient ? "Stop ambient music" : "Play ambient music"}
+          title={ambient ? "Ambient off" : "Ambient on"}
+          onClick={toggleAmbient}
+          className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${ambient ? "text-accent" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <Music className="h-3.5 w-3.5" />
+        </button>
+        <button
+          aria-label={hideSpoilers ? "Show character roles" : "Hide character roles (spoiler-free)"}
+          title={hideSpoilers ? "Show roles" : "Hide roles"}
+          onClick={() => setSpoilersHidden(!hideSpoilers)}
+          className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${hideSpoilers ? "text-accent" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <EyeOff className="h-3.5 w-3.5" />
         </button>
         {user ? (
           <button aria-label="Sign out" onClick={signOut} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"><LogOut className="h-3.5 w-3.5" /></button>

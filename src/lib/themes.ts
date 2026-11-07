@@ -29,6 +29,8 @@ export const THEMES: ThemePreset[] = [
   { id: "thunder", label: "Thunder · Storm Crown", hue: 95, chroma: 0.17, glow: 250 },
   { id: "frost", label: "Frost · Glacier Vow", hue: 225, chroma: 0.07, glow: 200 },
   { id: "inferno", label: "Inferno · Ember Core", hue: 45, chroma: 0.2, glow: 25 },
+  { id: "solid", label: "Solid · Carbon Ops", hue: 260, chroma: 0.004, glow: 260 },
+  { id: "eyecare", label: "Eye Care · Warm Dossier", hue: 55, chroma: 0.09, glow: 45 },
 ];
 
 export const DEFAULT_THEME = "blackops";

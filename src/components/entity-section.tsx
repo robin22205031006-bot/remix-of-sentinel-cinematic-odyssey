@@ -30,6 +30,7 @@ import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
 import { ABILITY_GROUP_LABELS, abilityDef, sortAbilities, type AbilityGroup } from "@/lib/abilities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { animationClass, tierDef } from "@/lib/character-tier";
+import { onSpoilerChange, spoilersHidden } from "@/lib/spoiler";
 import { exportDossierPdf, type DossierGroup } from "@/lib/export-dossier";
 import { getCombatStats } from "@/lib/combat-stats";
 
@@ -92,6 +93,8 @@ const Avatar = memo(function Avatar({ e, size }: { e: Entity; size: string }) {
 const CardBody = memo(function CardBody({ e, showKind }: { e: Entity; showKind: boolean }) {
   const tier = tierDef(e.character_tier);
   const theme = e.theme_color ?? tier?.color ?? null;
+  const [hideSpoilers, setHideSpoilers] = useState(spoilersHidden);
+  useEffect(() => onSpoilerChange(() => setHideSpoilers(spoilersHidden())), []);
   return (
     <div className="min-w-0 flex-1 text-left">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -104,7 +107,8 @@ const CardBody = memo(function CardBody({ e, showKind }: { e: Entity; showKind: 
             {tier.label}
           </span>
         )}
-        {(e.category || showKind) && <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{e.category ?? e.kind}</span>}
+        {!hideSpoilers && (e.category || showKind) && <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{e.category ?? e.kind}</span>}
+        {hideSpoilers && <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Role hidden</span>}
       </div>
       <h2 className="mt-1 truncate text-2xl font-medium" style={theme ? { color: theme } : undefined}>{e.name}</h2>
       <p className="truncate text-sm text-muted-foreground">{[e.alias, e.role].filter(Boolean).join(" · ") || "—"}</p>

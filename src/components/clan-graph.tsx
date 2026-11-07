@@ -84,6 +84,7 @@ export function ClanGraph() {
   const [groupId, setGroupId] = useState<string>("");
   const [quick, setQuick] = useState<{ e: Entity; x: number; y: number } | null>(null);
   const [editingLinks, setEditingLinks] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const [linkForm, setLinkForm] = useState({ source: "", target: "", rel: "ally" as RelType, label: "" });
 
   const { data: entities } = useQuery(entitiesQuery(ALL_KINDS));
@@ -298,7 +299,7 @@ export function ClanGraph() {
             {groups.length === 0 ? "No clans or organizations with members yet." : "Nothing to display for this view."}
           </p>
         ) : (
-          <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full">
+          <svg viewBox={`${W / 2 - W / (2 * zoom)} ${H / 2 - H / (2 * zoom)} ${W / zoom} ${H / zoom}`} className="h-auto w-full">
             {edges.map((e2, i) => {
               const a = nodes.find((n) => n.e.id === e2.a)?.p;
               const b = nodes.find((n) => n.e.id === e2.b)?.p;
@@ -356,6 +357,13 @@ export function ClanGraph() {
             })}
           </svg>
         )}
+
+        {/* zoom controls */}
+        <div className="absolute right-3 top-3 z-10 flex gap-1.5">
+          <button aria-label="Zoom out" onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.2).toFixed(2)))} className="grid h-8 w-8 place-items-center rounded-full bg-secondary/90 text-sm font-bold hover:text-foreground">−</button>
+          <button aria-label="Reset zoom" onClick={() => setZoom(1)} className="grid h-8 w-8 place-items-center rounded-full bg-secondary/90 text-[10px] font-bold hover:text-foreground">{Math.round(zoom * 100)}%</button>
+          <button aria-label="Zoom in" onClick={() => setZoom((z) => Math.min(3, +(z + 0.2).toFixed(2)))} className="grid h-8 w-8 place-items-center rounded-full bg-secondary/90 text-sm font-bold hover:text-foreground">+</button>
+        </div>
 
         {/* quick view card */}
         {quick && (

@@ -17,6 +17,7 @@ import { AdminTypography } from "@/components/admin-typography";
 import { AdminNavVisibility } from "@/components/admin-nav-visibility";
 import { AdminAppearance } from "@/components/admin-appearance";
 import { AdminAudio } from "@/components/admin-audio";
+import { AdminContradictions } from "@/components/admin-contradictions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -262,25 +263,7 @@ function Admin() {
         </div>
       </section>
 
-      {(conflicts ?? []).length > 0 && (
-        <section className="glass rounded-2xl p-5">
-          <h2 className="mb-1 text-2xl">Lore conflicts</h2>
-          <p className="mb-3 text-sm text-muted-foreground">
-            Extraction disagreements preserved as notes — review and resolve them on each entity.
-          </p>
-          <ul className="grid gap-2 text-sm">
-            {(conflicts ?? []).map((c) => (
-              <li key={c.id} className="rounded-lg bg-secondary/50 px-3 py-2">
-                <span className="font-medium">{c.entity_name}</span>
-                <span className="text-muted-foreground"> — {c.text}</span>
-                <span className="ml-2 text-xs text-muted-foreground">
-                  {c.source ?? ""} · {new Date(c.created_at).toLocaleDateString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {(conflicts ?? []).length > 0 && <AdminContradictions conflicts={conflicts ?? []} />}
 
       <section className="glass rounded-2xl p-5">
         <h2 className="mb-3 text-2xl">Recent activity</h2>

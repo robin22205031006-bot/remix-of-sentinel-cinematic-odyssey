@@ -422,10 +422,10 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
               </div>
             </div>
           )}
-          {dossierTab === "lore" && notes && notes.length > 0 && (
+          {dossierTab === "lore" && notes && notes.filter((n) => !/^\[(conflict|Auto-Merged|Auto-Stub|scope|resolved)\]/.test(n.text)).length > 0 && (
             <div className="grid gap-3">
               <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Lore notes</h4>
-              {notes.map((n) => (
+              {notes.filter((n) => !/^\[(conflict|Auto-Merged|Auto-Stub|scope|resolved)\]/.test(n.text)).map((n) => (
                 <div key={n.id} className="border-l-2 border-accent/60 pl-3">
                   <p>{n.text}</p>
                   {n.source && <p className="mt-1 text-xs text-muted-foreground">From {n.source}</p>}

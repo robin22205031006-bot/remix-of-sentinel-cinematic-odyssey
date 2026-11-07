@@ -53,18 +53,30 @@ const applySchema = z.object({
     z.object({
       kind: z.enum(kinds),
       name: z.string(),
-      alias: z.string().nullable(),
-      role: z.string().nullable(),
-      status: z.string().nullable(),
-      category: z.string().nullable().optional(),
-      description: z.string(),
-      quote: z.string(),
+      alias: z.string().nullish().transform((v) => v ?? null),
+      role: z.string().nullish().transform((v) => v ?? null),
+      status: z.string().nullish().transform((v) => v ?? null),
+      category: z.string().nullish().transform((v) => v ?? null),
+      description: z.string().optional().default(""),
+      quote: z.string().optional().default(""),
     }),
   ),
   updates: z.array(
-    z.object({ existing_name: z.string(), new_facts: z.string(), status: z.string().nullable(), quote: z.string() }),
+    z.object({
+      existing_name: z.string(),
+      new_facts: z.string().optional().default(""),
+      status: z.string().nullish().transform((v) => v ?? null),
+      quote: z.string().optional().default(""),
+    }),
   ),
-  events: z.array(z.object({ title: z.string(), era: z.string().nullable(), description: z.string(), quote: z.string() })),
+  events: z.array(
+    z.object({
+      title: z.string(),
+      era: z.string().nullish().transform((v) => v ?? null),
+      description: z.string().optional().default(""),
+      quote: z.string().optional().default(""),
+    }),
+  ),
 });
 
 export const applyLore = createServerFn({ method: "POST" })
@@ -153,27 +165,27 @@ export const applyLore = createServerFn({ method: "POST" })
 const consolidatedEntity = z.object({
   kind: z.enum(kinds),
   name: z.string(),
-  alias: z.string().nullable(),
-  role: z.string().nullable(),
-  status: z.string().nullable(),
-  category: z.string().nullable().optional(),
-  description: z.string(),
-  quote: z.string().default(""),
+  alias: z.string().nullish().transform((v) => v ?? null),
+  role: z.string().nullish().transform((v) => v ?? null),
+  status: z.string().nullish().transform((v) => v ?? null),
+  category: z.string().nullish().transform((v) => v ?? null),
+  description: z.string().optional().default(""),
+  quote: z.string().optional().default(""),
   sources: z.array(z.string()).optional(),
   conflicts: z.array(z.string()).optional(),
 });
 const consolidatedUpdate = z.object({
   existing_name: z.string(),
-  new_facts: z.string(),
-  status: z.string().nullable(),
-  quote: z.string().default(""),
+  new_facts: z.string().optional().default(""),
+  status: z.string().nullish().transform((v) => v ?? null),
+  quote: z.string().optional().default(""),
   source: z.string().optional(),
 });
 const consolidatedEvent = z.object({
   title: z.string(),
-  era: z.string().nullable(),
-  description: z.string(),
-  quote: z.string().default(""),
+  era: z.string().nullish().transform((v) => v ?? null),
+  description: z.string().optional().default(""),
+  quote: z.string().optional().default(""),
   sources: z.array(z.string()).optional(),
 });
 

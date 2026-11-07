@@ -53,7 +53,26 @@ export interface SyncPlan {
   loreNoteInserts: Array<{ entity_id: string; text: string; source: string }>;
   entityUpdates: Array<{ id: string; patch: Record<string, string>; locked_fields?: string[] }>;
   timelineInserts: Array<{ title: string; era: string | null; description: string; source: string; sort_order: number }>;
+  /** Non-blocking notices: alias redirects, stub creations, merges. */
+  warnings: string[];
 }
+
+/** Historical/variant names → canonical entity name (normalized keys). */
+const ALIAS_MAP: Record<string, string> = {
+  "khalid ibn kharif": "khalid",
+  "khalid ibn sharif": "khalid",
+  "khalid el mansur": "khalid",
+  "alt ethan": "ethan",
+  "ethan thorne": "ethan",
+  "elizah": "ethan",
+  "robin": "ethan",
+  "zaynab al-ahd": "issabela",
+  "zaynab": "issabela",
+  "nasab ibn khalil": "ramiz",
+  "alter david": "alt david",
+  "ayman": "ayaan",
+  "echan": "ethan",
+};
 
 export interface SyncInput {
   source: string;
@@ -68,7 +87,7 @@ export function canSyncLore(email: string | null | undefined, roles: string[]): 
 }
 
 export function planLoreSync(archive: ArchiveEntity[], inputs: SyncInput[], lastSortOrder = 0): SyncPlan {
-  const plan: SyncPlan = { entityInserts: [], loreNoteInserts: [], entityUpdates: [], timelineInserts: [] };
+  const plan: SyncPlan = { entityInserts: [], loreNoteInserts: [], entityUpdates: [], timelineInserts: [], warnings: [] };
   const byName = new Map<string, ArchiveEntity[]>();
   for (const entry of archive) {
     const key = normalize(entry.name);
@@ -78,6 +97,20 @@ export function planLoreSync(archive: ArchiveEntity[], inputs: SyncInput[], last
     const matches = byName.get(normalize(name)) ?? [];
     if (matches.length > 1) throw new Error(`Multiple entries named ${name}. Resolve them before importing.`);
     return matches[0];
+  };
+  /** Resolve a referenced name: direct → alias map → canonical lookup. */
+  const resolveRef = (name: string): { entity?: ArchiveEntity; via?: string } => {
+    const direct = find(name);
+    if (direct) return { entity: direct };
+    const canon = ALIAS_MAP[normalize(name)];
+    if (canon) {
+      const target = find(canon);
+      if (target) {
+        plan.warnings.push(`[Auto-Merged]: Redirected reference from '${name}' to canonical entity '${target.name}'`);
+        return { entity: target, via: name };
+      }
+    }
+    return {};
   };
 
   // Resolve ambiguous names before planning any writes.
@@ -94,8 +127,18 @@ export function planLoreSync(archive: ArchiveEntity[], inputs: SyncInput[], last
     const src = input.source;
 
     for (const e of input.new_entities) {
-      const dup = find(e.name);
       const conflictNotes = (e.conflicts ?? []).map((c) => `[conflict] ${c}`);
+      let dup = find(e.name);
+      if (!dup) {
+        const canon = ALIAS_MAP[normalize(e.name)];
+        const aliased = canon ? find(canon) : undefined;
+        if (aliased && !aliased.id.startsWith("pending:")) {
+          plan.warnings.push(`[Auto-Merged]: Redirected new entity '${e.name}' to canonical entity '${aliased.name}'`);
+          plan.loreNoteInserts.push({ entity_id: aliased.id, text: e.description, source: src });
+          for (const c of conflictNotes) plan.loreNoteInserts.push({ entity_id: aliased.id, text: c, source: src });
+          continue;
+        }
+      }
       if (dup) {
         if (dup.id.startsWith("pending:")) {
           // Same name inserted earlier in this plan: fold facts into that insert.
@@ -149,8 +192,28 @@ export function planLoreSync(archive: ArchiveEntity[], inputs: SyncInput[], last
   for (const input of inputs) {
     const src = input.source;
     for (const u of input.updates) {
-      const target = find(u.existing_name);
-      if (!target) throw new Error(`The entry ${u.existing_name} no longer exists.`);
+      let target = find(u.existing_name);
+      if (!target) {
+        const resolved = resolveRef(u.existing_name);
+        if (resolved.entity) {
+          target = resolved.entity;
+          u.existing_name = target.name;
+        } else {
+          // Unknown reference: create a light stub instead of aborting the sync.
+          const stubName = u.existing_name;
+          plan.entityInserts.push({
+            kind: "character", name: stubName, alias: null, role: "Unclassified", status: "Alive",
+            category: "Support", description: "", image_url: null, source: src,
+            notes: [`[Auto-Stub]: created placeholder for unresolved sync reference '${stubName}'`],
+          });
+          byName.set(normalize(stubName), [
+            { id: `pending:${normalize(stubName)}`, name: stubName, kind: "character", status: "Alive", category: "Support", locked_fields: [] },
+          ]);
+          plan.warnings.push(`[Auto-Stub]: Created placeholder entity '${stubName}' — no alias mapping or archive match found`);
+          target = find(stubName);
+        }
+      }
+      if (!target) throw new Error(`The entry ${u.existing_name} could not be resolved.`);
       const pendingInsert = plan.entityInserts.find((i) => normalize(i.name) === normalize(target.name));
       if (u.new_facts.trim() && !target.id.startsWith("pending:")) {
         plan.loreNoteInserts.push({ entity_id: target.id, text: u.new_facts, source: src });

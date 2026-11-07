@@ -97,6 +97,11 @@ function Admin() {
       );
       const result = await runSync({ data: { entities, updates, events } });
       toast.success(`Lore sync complete: ${result.created} created, ${result.notes} notes, ${result.updated} updated, ${result.events} events.`);
+      const warns = (result.warnings ?? []) as string[];
+      if (warns.length) {
+        warns.slice(0, 5).forEach((w) => toast.warning(w, { duration: 8000 }));
+        if (warns.length > 5) toast.warning(`…and ${warns.length - 5} more sync notices`, { duration: 8000 });
+      }
       qc.invalidateQueries({ queryKey: ["entities"] });
       qc.invalidateQueries({ queryKey: ["timeline"] });
       qc.invalidateQueries({ queryKey: ["admin"] });

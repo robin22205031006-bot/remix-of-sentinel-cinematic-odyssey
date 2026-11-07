@@ -288,6 +288,7 @@ export const syncLoreExport = createServerFn({ method: "POST" })
       notes: plan.loreNoteInserts.length,
       updated: plan.entityUpdates.length,
       events: plan.timelineInserts.length,
+      warnings: plan.warnings,
     };
     checked(await sb.from("ingest_jobs").insert({ filename: "lore-export batch", summary }), "ingest_jobs insert");
     return summary;

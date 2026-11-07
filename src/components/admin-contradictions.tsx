@@ -15,9 +15,9 @@ export interface ConflictRow {
 }
 
 interface ParsedConflict {
-  field: string; // status | kind | category | role | faction | other
-  a: string;     // archived value
-  b: string;     // extracted value
+  field: string;
+  a: string;
+  b: string;
 }
 
 /** Parses "[conflict] <field>: archived 'X' vs extracted 'Y'" into a question. */
@@ -36,14 +36,15 @@ const FIELD_LABELS: Record<string, string> = {
   faction: "faction",
 };
 
+type ScopeMap = Record<string, string>; // canon scope -> chosen value
+
 export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
-  const [scopedFor, setScopedFor] = useState<string | null>(null);
-  const [scope, setScope] = useState<string>(CANON_SCOPES[0] ?? "Sentinels S1");
-  const [scopeKind, setScopeKind] = useState<"status" | "faction">("status");
-  const [scopeStatus, setScopeStatus] = useState<string>("");
-  const [scopeFaction, setScopeFaction] = useState<string>("");
+  const [periodFor, setPeriodFor] = useState<string | null>(null);
+  const [periodMap, setPeriodMap] = useState<ScopeMap>({});
+  const [customFor, setCustomFor] = useState<string | null>(null);
+  const [customText, setCustomText] = useState("");
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-conflicts"] });
 
@@ -52,7 +53,7 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
     if (error) throw error;
   };
 
-  /** Admin picks one option — writes it as canon and clears the flag. */
+  /** Single canon answer — writes value globally and clears the flag. */
   const pick = async (c: ConflictRow, field: string, value: string) => {
     setBusy(c.id);
     try {
@@ -75,36 +76,53 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
     }
   };
 
-  /** Scoped progression: attach a status or faction roster to one canon season. */
-  const saveScoped = async (c: ConflictRow) => {
+  /** Both options are right — persist a per-season assignment matrix. */
+  const savePeriods = async (c: ConflictRow, parsed: ParsedConflict) => {
+    const entries = Object.entries(periodMap).filter(([, v]) => v);
+    if (!entries.length) { toast.error("Assign at least one season."); return; }
     setBusy(c.id);
     try {
-      const note =
-        scopeKind === "status"
-          ? `[scope] status '${scopeStatus}' applies to ${scope}`
-          : `[scope] faction '${scopeFaction}' roster applies to ${scope}`;
-      const { error } = await supabase.from("lore_notes").insert({
-        entity_id: c.entity_id,
-        text: note,
-        source: "admin-resolver",
-      });
-      if (error) throw error;
+      for (const [scope, value] of entries) {
+        const { error } = await supabase.from("lore_notes").insert({
+          entity_id: c.entity_id,
+          text: `[scope] ${parsed.field} '${value}' applies to ${scope}`,
+          source: "admin-resolver",
+        });
+        if (error) throw error;
+      }
+      // Global status = value of the latest assigned canon season (timeline "now").
+      const latest = CANON_SCOPES.filter((s) => periodMap[s]).at(-1);
+      const latestVal = latest ? periodMap[latest] : undefined;
+      if (parsed.field === "status" && latestVal) {
+        const { error } = await supabase.from("entities").update({ status: latestVal }).eq("id", c.entity_id);
+        if (error) throw error;
+      }
       await clearConflict(c);
-      toast.success(`Scoped to ${scope}`);
+      toast.success(`Period map saved for ${entries.length} season${entries.length > 1 ? "s" : ""}`);
+      setPeriodFor(null);
+      setPeriodMap({});
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save scoped status.");
+      toast.error(err instanceof Error ? err.message : "Could not save period map.");
     } finally {
       setBusy(null);
-      setScopedFor(null);
     }
+  };
+
+  /** Custom third answer typed by the admin. */
+  const saveCustom = async (c: ConflictRow, parsed: ParsedConflict) => {
+    const value = customText.trim();
+    if (!value) return;
+    await pick(c, parsed.field, value);
+    setCustomFor(null);
+    setCustomText("");
   };
 
   return (
     <section className="glass rounded-2xl p-5">
       <h2 className="mb-1 text-2xl">Lore conflicts</h2>
       <p className="mb-3 text-sm text-muted-foreground">
-        Each entry is a question — pick the canon answer, or scope it to a season as valid narrative progression.
+        Each card asks which version is canon — pick one answer, or map both answers to specific seasons when both are true at different points in the timeline.
       </p>
       <ul className="grid gap-3 text-sm">
         {conflicts.map((c) => {
@@ -123,102 +141,138 @@ export function AdminContradictions({ conflicts }: { conflicts: ConflictRow[] })
                 {c.text} · {c.source ?? ""} · {new Date(c.created_at).toLocaleDateString()}
               </p>
 
-              {/* Answer options */}
               {parsed && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {isStatus ? (
-                    LIFE_STATUSES.map((s) => (
-                      <Button
-                        key={s}
-                        size="sm"
-                        variant={s === "Presumed Dead" ? "secondary" : "outline"}
-                        disabled={busy === c.id}
-                        onClick={() => pick(c, "status", s)}
-                      >
-                        {s}
-                      </Button>
-                    ))
-                  ) : (
-                    <>
-                      <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => pick(c, parsed.field, parsed.a)}>
-                        Keep '{parsed.a}'
-                      </Button>
-                      <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => pick(c, parsed.field, parsed.b)}>
-                        Use '{parsed.b}'
-                      </Button>
-                    </>
-                  )}
-                  {!parsed && isFaction && (
+                <>
+                  {/* Answer options — the exact conflict values */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {isStatus ? (
+                      LIFE_STATUSES.map((s) => (
+                        <Button
+                          key={s}
+                          size="sm"
+                          variant={s === "Presumed Dead" ? "secondary" : "outline"}
+                          disabled={busy === c.id}
+                          onClick={() => pick(c, "status", s)}
+                        >
+                          {s}
+                        </Button>
+                      ))
+                    ) : (
+                      <>
+                        <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => pick(c, parsed.field, parsed.a)}>
+                          '{parsed.a}'
+                        </Button>
+                        <Button size="sm" variant="outline" disabled={busy === c.id} onClick={() => pick(c, parsed.field, parsed.b)}>
+                          '{parsed.b}'
+                        </Button>
+                      </>
+                    )}
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       disabled={busy === c.id}
                       onClick={() => {
-                        setScopedFor(scopedFor === c.id ? null : c.id);
-                        setScopeKind("faction");
-                        setScopeFaction("");
+                        const open = periodFor !== c.id;
+                        setPeriodFor(open ? c.id : null);
+                        setPeriodMap(open ? { [`${parsed.a}|${parsed.b}`]: "" } as ScopeMap : {});
+                        setCustomFor(null);
                       }}
                     >
-                      Update Faction Roster Scope
+                      Both — assign seasons
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy === c.id}
+                      onClick={() => { setCustomFor(customFor === c.id ? null : c.id); setCustomText(""); setPeriodFor(null); }}
+                    >
+                      Other…
+                    </Button>
+                  </div>
+
+                  {/* Custom answer */}
+                  {customFor === c.id && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <input
+                        className="w-48 rounded-md border border-border bg-background px-2 py-1 text-xs"
+                        placeholder={`Custom ${FIELD_LABELS[parsed.field] ?? parsed.field}`}
+                        value={customText}
+                        onChange={(e) => setCustomText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && void saveCustom(c, parsed)}
+                      />
+                      <Button size="sm" disabled={busy === c.id || !customText.trim()} onClick={() => void saveCustom(c, parsed)}>Set as canon</Button>
+                    </div>
                   )}
+
+                  {/* Both-are-right: per-season assignment matrix */}
+                  {periodFor === c.id && (
+                    <div className="mt-3 rounded-md border border-accent/30 bg-accent/5 p-3">
+                      <p className="mb-2 text-xs font-medium text-muted-foreground">
+                        Both answers are canon at different times — assign each to its seasons:
+                      </p>
+                      <div className="grid gap-1.5">
+                        {CANON_SCOPES.map((scope) => (
+                          <div key={scope} className="flex items-center gap-2">
+                            <span className="w-28 text-xs">{scope}</span>
+                            <select
+                              className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+                              value={periodMap[scope] ?? ""}
+                              onChange={(e) => setPeriodMap((m) => ({ ...m, [scope]: e.target.value }))}
+                            >
+                              <option value="">—</option>
+                              <option value={parsed.a}>{parsed.a}</option>
+                              <option value={parsed.b}>{parsed.b}</option>
+                              {isStatus && LIFE_STATUSES.filter((s) => s !== parsed.a && s !== parsed.b).map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Button size="sm" disabled={busy === c.id} onClick={() => void savePeriods(c, parsed)}>Save period map</Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setPeriodFor(null); setPeriodMap({}); }}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {!parsed && isFaction && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant="outline"
                     disabled={busy === c.id}
-                    onClick={() => {
-                      setScopedFor(scopedFor === c.id ? null : c.id);
-                      setScopeKind(isStatus ? "status" : "faction");
-                      setScopeStatus(parsed?.a ?? "Alive");
-                      setScopeFaction("");
-                    }}
+                    onClick={() => { setCustomFor(customFor === c.id ? null : c.id); setPeriodFor(null); }}
                   >
-                    Season/Timeline Progression
+                    Set faction scope…
                   </Button>
                 </div>
               )}
-
-              {/* Scoped selector */}
-              {scopedFor === c.id && (
-                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-accent/30 bg-accent/5 p-2">
-                  <span className="text-xs text-muted-foreground">Attach to:</span>
-                  <select
-                    className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-                    value={scope}
-                    onChange={(e) => setScope(e.target.value)}
-                  >
-                    {CANON_SCOPES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select
-                    className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-                    value={scopeKind}
-                    onChange={(e) => setScopeKind(e.target.value as "status" | "faction")}
-                  >
-                    <option value="status">Life status</option>
-                    <option value="faction">Faction roster</option>
-                  </select>
-                  {scopeKind === "status" ? (
-                    <select
-                      className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-                      value={scopeStatus}
-                      onChange={(e) => setScopeStatus(e.target.value)}
-                    >
-                      {LIFE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  ) : (
-                    <input
-                      className="w-40 rounded-md border border-border bg-background px-2 py-1 text-xs"
-                      placeholder="Faction name"
-                      value={scopeFaction}
-                      onChange={(e) => setScopeFaction(e.target.value)}
-                    />
-                  )}
+              {!parsed && customFor === c.id && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <input
+                    className="w-48 rounded-md border border-border bg-background px-2 py-1 text-xs"
+                    placeholder="Resolution note"
+                    value={customText}
+                    onChange={(e) => setCustomText(e.target.value)}
+                  />
                   <Button
                     size="sm"
-                    disabled={busy === c.id || (scopeKind === "faction" && !scopeFaction.trim())}
-                    onClick={() => saveScoped(c)}
+                    disabled={busy === c.id || !customText.trim()}
+                    onClick={async () => {
+                      setBusy(c.id);
+                      try {
+                        await supabase.from("lore_notes").insert({ entity_id: c.entity_id, text: `[resolved] ${customText.trim()}`, source: "admin-resolver" });
+                        await clearConflict(c);
+                        toast.success("Conflict resolved.");
+                        refresh();
+                      } catch (err) { toast.error(err instanceof Error ? err.message : "Failed."); }
+                      finally { setBusy(null); setCustomFor(null); setCustomText(""); }
+                    }}
                   >
-                    Save Scoped
+                    Resolve
                   </Button>
                 </div>
               )}

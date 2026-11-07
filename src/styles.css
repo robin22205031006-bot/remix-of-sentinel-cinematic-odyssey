@@ -463,3 +463,63 @@ html { --scu-gap: 0.75rem; }
   outline: 1px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* ===== Device-adaptive auto-scaling & containment ===== */
+
+/* Fluid root scale: ~14px on small phones → ~17px on large desktops,
+   still multiplied by user zoom (--scu-zoom) and admin base-scale. */
+html {
+  font-size: calc(clamp(13.5px, 0.55vw + 11.5px, 17px) * var(--scu-zoom, 1) * var(--scu-base-scale, 1));
+}
+
+/* Strict horizontal containment — nothing escapes the viewport */
+html, body {
+  overflow-x: clip;
+  max-width: 100vw;
+}
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+.glass, [class*="glass"] {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Dialogs/modals self-fit inside the viewport */
+[role="dialog"], [data-radix-popper-content-wrapper] > * {
+  max-width: calc(100vw - 1.5rem);
+  max-height: calc(100dvh - 2rem);
+}
+
+/* Fluid type for hero/display headings */
+.font-display, h1, h2 {
+  font-size: clamp(1.6rem, 4.5vw + 0.8rem, 3.2rem);
+}
+@media (min-width: 640px) {
+  .font-display, h1, h2 { font-size: clamp(2rem, 3vw + 1rem, 3.6rem); }
+}
+
+/* Generous touch targets on coarse pointers (finger input) */
+@media (pointer: coarse) {
+  button, [role="button"], select, summary {
+    min-height: 2.75rem; /* 44px */
+  }
+  input[type="range"] {
+    min-height: 2.75rem;
+  }
+  /* Keep tiny icon buttons usable but tappable */
+  button[class*="h-7"], button[class*="h-8"] {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+
+/* Prevent iOS input zoom + safe-area padding for notched devices */
+input, textarea, select {
+  font-size: max(1rem, 1em);
+}
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}

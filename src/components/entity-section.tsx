@@ -903,7 +903,7 @@ export function EntitySection({
       ) : list.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">{data?.length ? "No matches." : "Nothing in the archive yet."}</p>
       ) : viewMode === "showcase" ? (
-        <ShowcaseView list={list} onOpen={(e, ev) => { sfx.tierReveal(e.character_tier); setOpen({ id: e.id, rect: (ev.currentTarget.closest("[data-card]") as HTMLElement | null)?.getBoundingClientRect() ?? null }); }} />
+        <ShowcaseView list={list} onOpen={(e) => { sfx.tierReveal(e.character_tier); }} />
       ) : (
         <div className={viewMode === "grid" ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3"}>
           <AnimatePresence initial={false}>
@@ -922,16 +922,10 @@ export function EntitySection({
                 style={{ "--scu-aura": e.accent_glow ?? e.theme_color ?? "#a855f7" } as unknown as MotionStyle}
               >
                 <AbilityCardCanvas abilities={e.abilities} theme={e.card_theme} className="pointer-events-none absolute inset-0 h-full w-full opacity-30 transition-opacity group-hover:opacity-60" />
-                <button
-                  className="flex min-w-0 flex-1 gap-4"
-                  onClick={(ev) => {
-                    sfx.tierReveal(e.character_tier);
-                    setOpen({ id: e.id, rect: (ev.currentTarget.closest("article") as HTMLElement).getBoundingClientRect() });
-                  }}
-                >
+                <div className="flex min-w-0 flex-1 gap-4">
                   <Avatar e={e} size="h-16 w-16" />
                   <CardBody e={e} showKind={kinds.length > 1} />
-                </button>
+                </div>
                 {e.theme_song_url && <ThemeSongButton url={e.theme_song_url} />}
                 {isAdmin && (
                   <div className="flex shrink-0 flex-col gap-1">

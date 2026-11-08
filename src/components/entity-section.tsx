@@ -195,8 +195,10 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
     if (!s || !t) return;
     const dx = t.clientX - s.x;
     const dy = t.clientY - s.y;
-    // Swipe down or a long horizontal flick dismisses the dossier.
-    if (dy > 110 || Math.abs(dx) > 140) onClose();
+    // Swipe-to-close only fires when the dossier is already scrolled to the top —
+    // mid-content scrolls must never dismiss it. A long horizontal flick still works anywhere.
+    const atTop = (scrollRef.current?.scrollTop ?? 0) <= 2;
+    if ((atTop && dy > 110 && Math.abs(dx) < 60) || Math.abs(dx) > 140) onClose();
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -213,7 +215,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.2 } }}
       exit={{ opacity: 0, transition: { duration: 0.18 } }}
-      className="fixed inset-0 z-30 overflow-y-auto bg-black/55 backdrop-blur-md"
+      className="fixed inset-0 z-30 overflow-y-auto bg-black/80 backdrop-blur-2xl"
       layoutId={`card-${e.id}`}
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onClick={onClose}

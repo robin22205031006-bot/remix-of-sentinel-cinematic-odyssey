@@ -590,6 +590,39 @@ export type Database = {
         }
         Relationships: []
       }
+      character_abilities: {
+        Row: {
+          ability_key: string
+          created_at: string
+          entity_id: string
+          id: string
+          level: number
+          note: string | null
+          season_number: number | null
+          series_id: string | null
+        }
+        Insert: {
+          ability_key: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          level?: number
+          note?: string | null
+          season_number?: number | null
+          series_id?: string | null
+        }
+        Update: {
+          ability_key?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          level?: number
+          note?: string | null
+          season_number?: number | null
+          series_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -649,6 +682,7 @@ export type Database = {
       }
       series_characters: {
         Row: {
+          arc_role: string | null
           card_theme: string | null
           character_id: string
           created_at: string
@@ -658,6 +692,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          arc_role?: string | null
           card_theme?: string | null
           character_id: string
           created_at?: string
@@ -667,6 +702,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          arc_role?: string | null
           card_theme?: string | null
           character_id?: string
           created_at?: string

@@ -318,6 +318,16 @@ function SeriesMembers({ series }: { series: Series }) {
                 {statusOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
               <select
+                value={row.arc_role ?? ""}
+                onChange={(e) => update(row, { arc_role: e.target.value || null })}
+                className="h-7 rounded-md border bg-background px-1.5 text-xs"
+                aria-label={`Arc role of ${c.name} in ${series.title}`}
+                title="Arc role"
+              >
+                <option value="">Arc role…</option>
+                {["Lead protagonist", "Protagonist", "Main antagonist", "Antagonist", "Anti-hero", "Support", "Legend", "Cameo"].map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <select
                 value={row.card_theme ?? ""}
                 onChange={(e) => update(row, { card_theme: e.target.value || null })}
                 className="h-7 rounded-md border bg-background px-1.5 text-xs"

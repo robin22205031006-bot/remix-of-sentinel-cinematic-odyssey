@@ -54,11 +54,11 @@ function createSupabaseClient() {
   const SUPABASE_URL =
     import.meta.env['VITE_SUPABASE_URL'] ||
     process.env['SUPABASE_URL'] ||
-    'https://c--003cbc84-1f37-48c5-886f-4a215a227e32-prod.lovable.cloud';
+    'https://placeholder.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY =
     import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
     process.env['SUPABASE_PUBLISHABLE_KEY'] ||
-    'sb_publishable_bMvuynRqotDNoiSZT00XZw_dZ1JSvuB';
+    'sb_publishable_placeholder_dummy_key_for_offline_mode';
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {

@@ -4,10 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 // missing env var at build time can never crash the app on load.
 const supabaseUrl =
   import.meta.env["VITE_SUPABASE_URL"] ||
-  "https://c--003cbc84-1f37-48c5-886f-4a215a227e32-prod.lovable.cloud";
+  "https://placeholder.supabase.co";
 const supabaseAnonKey =
   import.meta.env["VITE_SUPABASE_ANON_KEY"] ||
   import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-  "sb_publishable_bMvuynRqotDNoiSZT00XZw_dZ1JSvuB";
+  "sb_publishable_placeholder_dummy_key_for_offline_mode";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

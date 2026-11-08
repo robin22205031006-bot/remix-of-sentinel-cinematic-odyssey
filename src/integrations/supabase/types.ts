@@ -92,6 +92,54 @@ export type Database = {
         }
         Relationships: []
       }
+      character_abilities: {
+        Row: {
+          ability_key: string
+          created_at: string
+          entity_id: string
+          id: string
+          level: number
+          note: string | null
+          season_number: number | null
+          series_id: string | null
+        }
+        Insert: {
+          ability_key: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          level?: number
+          note?: string | null
+          season_number?: number | null
+          series_id?: string | null
+        }
+        Update: {
+          ability_key?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          level?: number
+          note?: string | null
+          season_number?: number | null
+          series_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_abilities_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_abilities_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       character_relationships: {
         Row: {
           character_id_1: string
@@ -587,39 +635,6 @@ export type Database = {
           created_at?: string
           id?: string
           title?: string
-        }
-        Relationships: []
-      }
-      character_abilities: {
-        Row: {
-          ability_key: string
-          created_at: string
-          entity_id: string
-          id: string
-          level: number
-          note: string | null
-          season_number: number | null
-          series_id: string | null
-        }
-        Insert: {
-          ability_key: string
-          created_at?: string
-          entity_id: string
-          id?: string
-          level?: number
-          note?: string | null
-          season_number?: number | null
-          series_id?: string | null
-        }
-        Update: {
-          ability_key?: string
-          created_at?: string
-          entity_id?: string
-          id?: string
-          level?: number
-          note?: string | null
-          season_number?: number | null
-          series_id?: string | null
         }
         Relationships: []
       }

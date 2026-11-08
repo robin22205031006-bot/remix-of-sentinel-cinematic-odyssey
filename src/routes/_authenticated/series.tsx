@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BookMarked, FileText, Search, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -159,7 +159,8 @@ function SeriesHero({ series, counts, onOpen }: { series: Series[]; counts: Map<
 export function SeriesPage() {
   const { s } = useSearch({ strict: false }) as { s?: string };
   const sectionStyle = useSectionStyle("series");
-  const navigate = Route.useNavigate();
+  const nav = useNavigate();
+  const navigate = (o: { search: { s?: string } }) => nav({ to: ".", search: o.search as never });
   const [q, setQ] = useState("");
   const { data: series, isLoading } = useQuery(seriesQuery);
   const { data: episodes } = useQuery(episodesQuery);

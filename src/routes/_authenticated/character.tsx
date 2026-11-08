@@ -27,6 +27,44 @@ type Tab = (typeof TABS)[number][0];
 
 const SANITIZE = /^\[(conflict|Auto-Merged|Auto-Stub|scope|resolved|Merged Info)/i;
 
+function journeyScore(r: { arc_role?: string | null; status?: string | null; role_in_series?: string | null }): number {
+  const role = `${r.arc_role ?? ""} ${r.role_in_series ?? ""}`.toLowerCase();
+  if (/main\s*protagonist|lead\s*protagonist/.test(role)) return 5;
+  if (/protagonist|legend/.test(role)) return 4;
+  if (/anti-?hero|antagonist|anti-?villain|villain/.test(role)) return 3;
+  if (/support|mentor|side/.test(role)) return 2;
+  if (/cameo/.test(role)) return 1;
+  const st = (r.status ?? "").toLowerCase();
+  if (st === "dead" || st === "presumed dead") return 1;
+  if (st === "alive") return 3;
+  return 2;
+}
+
+function JourneyBars({ rows }: { rows: Array<{ id: string; series?: { title?: string | null } | null; arc_role?: string | null; status?: string | null; role_in_series?: string | null }> }) {
+  const pts = rows.map((r) => ({ label: r.series?.title ?? "?", score: journeyScore(r), role: r.arc_role ?? r.role_in_series ?? "" }));
+  const W = 560, H = 110, pad = 22;
+  const bw = (W - pad * 2) / Math.max(pts.length, 1);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+      {[1, 2, 3, 4, 5].map((g) => (
+        <line key={g} x1={pad} x2={W - pad} y1={H - pad - (g / 5) * (H - pad * 2)} y2={H - pad - (g / 5) * (H - pad * 2)} stroke="rgba(255,255,255,0.06)" />
+      ))}
+      {pts.map((p, i) => {
+        const x = pad + i * bw + bw / 2;
+        const h = (p.score / 5) * (H - pad * 2);
+        const y = H - pad - h;
+        return (
+          <g key={i}>
+            <rect x={x - bw * 0.32} y={y} width={bw * 0.64} height={h} rx={3} fill="var(--accent)" opacity={0.75} />
+            <text x={x} y={H - 6} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.5)">{p.label.replace(/^The\s*/i, "").slice(0, 10)}</text>
+          </g>
+        );
+      })}
+      <polyline points={pts.map((p, i) => `${pad + i * bw + bw / 2},${H - pad - (p.score / 5) * (H - pad * 2)}`).join(" ")} fill="none" stroke="var(--accent)" strokeWidth={1.5} strokeDasharray="3 3" opacity={0.6} />
+    </svg>
+  );
+}
+
 function CharacterDossier() {
   const { e: id } = Route.useSearch();
   const qc = useQueryClient();
@@ -36,6 +74,7 @@ function CharacterDossier() {
   const [openSeries, setOpenSeries] = useState<string | null>(null);
   const [ctxSeason, setCtxSeason] = useState<string | null>(null);
   const [seasonIdx, setSeasonIdx] = useState(-1);
+  const [descOpen, setDescOpen] = useState(false);
 
   const { data: e } = useQuery({ ...entityByIdQuery(id ?? ""), enabled: !!id });
   const { data: notes } = useQuery({ ...notesQuery(id ?? ""), enabled: !!id });
@@ -87,8 +126,17 @@ function CharacterDossier() {
         </div>
       </header>
 
+      {/* Tactical HUD frame */}
+      <div className="pointer-events-none absolute inset-0 z-10 opacity-[0.05]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+      {(["top-3 left-3 border-t border-l", "top-3 right-3 border-t border-r", "bottom-3 left-3 border-b border-l", "bottom-3 right-3 border-b border-r"] as const).map((pos) => (
+        <span key={pos} className={`pointer-events-none absolute z-10 h-5 w-5 border-white/25 ${pos}`} />
+      ))}
+      <span className="pointer-events-none absolute left-4 top-[4.5rem] z-10 font-mono text-[9px] uppercase tracking-widest text-white/30">
+        SCU // {e.name.slice(0, 12).toUpperCase()} — {String(Math.max(seasonIdx + 1, 1)).padStart(2, "0")} / {String(Math.max(seasons.length, 1)).padStart(2, "0")}
+      </span>
+
       {/* 3-COLUMN GRID */}
-      <div className="grid min-h-0 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_350px]">
+      <div className="relative grid min-h-0 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_350px]">
         {/* LEFT — series & season accordion */}
         <aside className="hidden min-h-0 flex-col border-r border-white/10 bg-black/50 p-3 lg:flex">
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
@@ -160,7 +208,16 @@ function CharacterDossier() {
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/50 p-5 backdrop-blur-xl">
               {tab === "lore" && (
                 <div className="space-y-4">
-                  {e.description && <p className="whitespace-pre-line text-foreground/85">{e.description}</p>}
+                  {e.description && (
+                    <div>
+                      <p className={`whitespace-pre-line text-foreground/85 ${!descOpen && e.description.length > 700 ? "line-clamp-6" : ""}`}>{e.description}</p>
+                      {e.description.length > 700 && (
+                        <button onClick={() => setDescOpen((o) => !o)} className="mt-1 text-xs font-semibold uppercase tracking-widest text-accent hover:underline">
+                          {descOpen ? "VER MENOS <<" : "VER MAS >>"}
+                        </button>
+                      )}
+                    </div>
+                  )}
                   {scopedNotes.map((n) => (
                     <div key={n.id} className="border-l-2 border-accent/60 pl-3 text-sm">
                       <p>{n.text}</p>
@@ -194,6 +251,11 @@ function CharacterDossier() {
                     </div>
                   ))}
                   {seasons.length === 0 && <p className="text-sm text-muted-foreground">No bonds recorded.</p>}
+                </div>
+              )}
+              {tab === "progress" && ui.showJourneyGraph && seasons.length > 0 && (
+                <div className="mb-4">
+                  <JourneyBars rows={seasons} />
                 </div>
               )}
               {tab === "progress" && (

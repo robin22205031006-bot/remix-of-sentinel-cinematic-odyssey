@@ -33,6 +33,11 @@ export function SeriesAppearances({ entity }: { entity: Entity }) {
               title={r.role_in_series ?? undefined}
             >
               <span className="max-w-40 truncate font-medium">{s.title}</span>
+              {r.arc_role && (
+                <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent">
+                  {r.arc_role}
+                </span>
+              )}
               <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider ${statusClass}`}>
                 <span className="h-1 w-1 rounded-full bg-current" />
                 {r.status}

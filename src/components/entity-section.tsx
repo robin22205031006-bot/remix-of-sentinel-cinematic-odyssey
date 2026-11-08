@@ -178,9 +178,13 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
   const combat = e.kind === "character" ? getCombatStats(e.stats) : null;
   const [comparing, setComparing] = useState(false);
+  const [journeyCompareId, setJourneyCompareId] = useState("");
   const [dossierTab, setDossierTab] = useState<"lore" | "powers" | "bonds" | "progress">("lore");
   const [seasonIdx, setSeasonIdx] = useState(0);
   const { data: seriesRows } = useQuery({ ...characterSeriesQuery(e.id), enabled: e.kind === "character" });
+  const { data: allChars } = useQuery({ ...entitiesQuery(["character"]), enabled: e.kind === "character" && dossierTab === "progress" });
+  const { data: compareRows } = useQuery({ ...characterSeriesQuery(journeyCompareId), enabled: !!journeyCompareId });
+  const compareSeasons = (compareRows ?? []).filter((r) => r.series);
   const seasons = (seriesRows ?? []).filter((r) => r.series);
   const SEASON_HUES = [262, 200, 150, 20, 340, 90, 180];
   const seasonHue = seasonIdx >= 0 && seasons.length ? SEASON_HUES[seasonIdx % SEASON_HUES.length] : null;
@@ -457,6 +461,25 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           {dossierTab === "progress" && (
             <div className="grid gap-4">
               {seasons.length > 1 && <JourneyGraph rows={seasons} />}
+              {e.kind === "character" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Compare journey:</span>
+                  <select
+                    className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+                    value={journeyCompareId}
+                    onChange={(ev) => setJourneyCompareId(ev.target.value)}
+                  >
+                    <option value="">Select character…</option>
+                    {(allChars ?? []).filter((c) => c.id !== e.id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              )}
+              {journeyCompareId && compareSeasons.length > 0 && (
+                <JourneyGraph rows={compareSeasons} />
+              )}
+              {journeyCompareId && compareSeasons.length === 0 && (
+                <p className="text-xs text-muted-foreground">No series data for the compared character.</p>
+              )}
               <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Ability progress by season</h4>
               {seasons.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No series data for this character.</p>

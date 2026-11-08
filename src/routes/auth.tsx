@@ -121,6 +121,29 @@ function AuthPage() {
         )}
         <div className="grid gap-1.5"><Label>Password</Label><Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "in" ? "current-password" : "new-password"} /></div>
         <Button disabled={busy}>{busy ? "…" : mode === "in" ? "Sign in" : "Sign up"}</Button>
+        {mode === "in" && (
+          <button
+            type="button"
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={async () => {
+              const id = identifier.trim();
+              if (!id) { toast.error("Enter your username or email first."); return; }
+              let email = id.includes("@") ? id : "";
+              if (!email) {
+                const { data } = await supabase.rpc("lookup_login_email", { p_username: id });
+                email = data ?? "";
+              }
+              if (!email) { toast.error("Account not found."); return; }
+              const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: new URL("/auth", window.location.origin).href,
+              });
+              if (error) toast.error(error.message);
+              else toast.success("Password reset link sent — check your email.");
+            }}
+          >
+            Forgot password?
+          </button>
+        )}
       </form>
       <button onClick={() => setMode(mode === "in" ? "up" : "in")} className="mt-4 text-sm text-muted-foreground hover:text-foreground">
         {mode === "in" ? "First time? Create your account" : "Have an account? Sign in"}

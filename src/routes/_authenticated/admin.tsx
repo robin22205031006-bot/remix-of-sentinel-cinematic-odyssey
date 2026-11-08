@@ -19,6 +19,7 @@ import { AdminAppearance } from "@/components/admin-appearance";
 import { AdminAudio } from "@/components/admin-audio";
 import { AdminContradictions } from "@/components/admin-contradictions";
 import { AdminCharacterAbilities } from "@/components/admin-character-abilities";
+import { AdminAccordion } from "@/components/admin-accordion";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -183,8 +184,7 @@ function Admin() {
         )}
       </header>
 
-      <section className="glass rounded-2xl p-5">
-        <h2 className="mb-1 text-2xl">Members</h2>
+      <AdminAccordion title="Members Management">
         {isAdmin && (
           <div className="mb-4 flex flex-col gap-2 sm:flex-row">
             <Input
@@ -239,18 +239,17 @@ function Admin() {
             );
           })}
         </ul>
-      </section>
+      </AdminAccordion>
 
-      {isAdmin && <AdminSeries />}
-      {isAdmin && <AdminTypography />}
-      {isAdmin && <AdminAppearance />}
-      {isAdmin && <AdminCharacterAbilities />}
-      {isAdmin && <AdminAudio />}
-      {isAdmin && <AdminNavVisibility />}
-      {isAdmin && <AdminEpisodes />}
-
-      <section className="glass rounded-2xl p-5">
-        <h2 className="mb-3 text-2xl">Banned words</h2>
+      {isAdmin && <AdminAccordion title="Series & Seasons"><AdminSeries /></AdminAccordion>}
+      {isAdmin && <AdminAccordion title="Typography & Theme"><AdminTypography /><AdminAppearance /></AdminAccordion>}
+      {isAdmin && <AdminAccordion title="Ability Assignments"><AdminCharacterAbilities /></AdminAccordion>}
+      {isAdmin && <AdminAccordion title="Audio Controls"><AdminAudio /></AdminAccordion>}
+      {isAdmin && <AdminAccordion title="Navigation Visibility"><AdminNavVisibility /></AdminAccordion>}
+      <AdminAccordion title="Episode Drafts & Banned Words">
+        {isAdmin && <AdminEpisodes />}
+        <div className="mb-3">
+          <h3 className="mb-2 text-lg">Banned words</h3>
         <div className="mb-3 flex gap-2">
           <Input placeholder="Add a word" value={word} onChange={(e) => setWord(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addWord()} />
           <Button onClick={addWord}>Add</Button>
@@ -263,9 +262,10 @@ function Admin() {
             </span>
           ))}
         </div>
-      </section>
+        </div>
+      </AdminAccordion>
 
-      {(conflicts ?? []).length > 0 && <AdminContradictions conflicts={conflicts ?? []} />}
+      {(conflicts ?? []).length > 0 && <AdminAccordion title={`Lore Conflicts / Contradictions (${conflicts?.length ?? 0})`} defaultOpen><AdminContradictions conflicts={conflicts ?? []} /></AdminAccordion>}
 
       <section className="glass rounded-2xl p-5">
         <h2 className="mb-3 text-2xl">Recent activity</h2>

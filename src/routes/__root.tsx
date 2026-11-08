@@ -13,6 +13,7 @@ import { WifiOff } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteNav } from "@/components/site-nav";
 import { FloatingNav } from "@/components/floating-nav";
+import { WelcomeVfx } from "@/components/welcome-vfx";
 import { AmbientField } from "@/components/ambient-field";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { AppearanceProvider } from "@/hooks/use-appearance";
@@ -176,6 +177,10 @@ function RootComponent() {
       )
         return;
       syncSessionCache(queryClient, session?.user ?? null);
+      if (event === "SIGNED_OUT") {
+        // Strict sign-out: purge persisted offline cache so re-entry requires online auth.
+        try { localStorage.removeItem("scu-rq-cache-v1"); } catch { /* storage unavailable */ }
+      }
       queueMicrotask(() => {
         void router.invalidate();
         if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
@@ -205,6 +210,7 @@ function RootComponent() {
           <ScrollProgress />
           <SiteNav />
           <FloatingNav />
+          <WelcomeVfx />
           {offline && (
             <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/90 px-4 py-2 text-xs font-medium text-amber-200 shadow-lg backdrop-blur-sm">
               <WifiOff className="h-3.5 w-3.5" />

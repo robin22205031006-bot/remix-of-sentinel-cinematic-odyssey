@@ -299,7 +299,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.2 } }}
       exit={{ opacity: 0, transition: { duration: 0.18 } }}
-      className="fixed inset-0 z-30 overflow-y-auto bg-black/80 backdrop-blur-2xl"
+      className="fixed inset-0 z-30 overflow-hidden bg-[#020408]"
       layoutId={`card-${e.id}`}
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onClick={onClose}
@@ -315,9 +315,9 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
       <span className="pointer-events-none absolute left-4 top-4 font-mono text-[9px] uppercase tracking-widest text-white/30">
         SCU // {e.name.slice(0, 12).toUpperCase()} — {String(Math.max(seasonIdx + 1, 1)).padStart(2, "0")} / {String(Math.max(seasons.length, 1)).padStart(2, "0")}
       </span>
-      <div className="relative mx-auto grid max-w-[90rem] lg:grid-cols-[14rem_minmax(0,1fr)_4.5rem]" onClick={(ev) => ev.stopPropagation()}>
-        {/* Column 1 — vertical thumbnail rail */}
-        <aside className="hidden flex-col border-r border-white/10 bg-black/40 p-3 lg:flex">
+      <div className="relative grid h-full grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_350px]" onClick={(ev) => ev.stopPropagation()}>
+        {/* Column 1 — series & season accordion carousel */}
+        <aside className="hidden h-full flex-col border-r border-white/10 bg-black/40 p-3 lg:flex">
           <p className="mb-3 px-1 font-display text-lg tracking-widest text-accent">SCU</p>
           <div ref={railRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
             {/* Overview thumb */}
@@ -410,15 +410,8 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             ))}
           </div>
         )}
-        <section className="morph-in relative grid content-start gap-6 p-5 text-sm leading-relaxed sm:p-7 lg:p-10">
+        <section className="morph-in relative grid h-full content-start gap-6 overflow-y-auto p-5 text-sm leading-relaxed sm:p-7 lg:p-10">
           <AbilityCardCanvas abilities={e.abilities} theme={seasonIdx >= 0 ? seasons[seasonIdx]?.card_theme ?? e.card_theme : e.card_theme} density={2.2} className="pointer-events-none absolute inset-0 h-full w-full opacity-35" />
-          {/* Hero render — right side, rim-lit by active accent */}
-          {e.image_url && (
-            <div className="pointer-events-none absolute right-0 top-0 hidden h-full w-[38%] items-end justify-center overflow-hidden lg:flex" aria-hidden>
-              <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 80%, ${seasonHue ? `hsl(${seasonHue} 85% 55% / .22)` : "var(--accent)"} 0%, transparent 65%)` }} />
-              <img src={e.image_url} alt={e.name} className="relative h-[86%] w-auto max-w-full object-contain object-bottom [mask-image:linear-gradient(to_top,black_55%,transparent_98%)]" />
-            </div>
-          )}
           <div className="relative flex items-start justify-between gap-4">
             <h3 className="flex flex-wrap items-center gap-3 font-display text-5xl font-black uppercase leading-[0.95] tracking-tight text-white sm:text-6xl lg:max-w-[55%]" style={{ textShadow: `0 0 30px ${seasonHue ? `hsl(${seasonHue} 85% 60% / .45)` : "var(--accent)"}66` }}>
             <KineticText text={e.name} className="relative font-display text-5xl font-bold uppercase tracking-wide text-white drop-shadow-[0_0_24px_rgba(168,85,247,0.45)] sm:text-6xl" />
@@ -671,8 +664,16 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             </div>
           )}
         </section>
-        {/* Column 3 — right-edge vertical tab strip */}
-        <nav className="sticky top-24 hidden h-fit flex-col items-stretch gap-1 self-start border-l border-white/10 bg-black/40 py-4 lg:flex" aria-label="Dossier sections">
+        {/* Column 3 — character render + far-right edge tab strip */}
+        <div className="relative hidden h-full lg:block" aria-hidden={false}>
+          {/* Full-height character render */}
+          {e.image_url && (
+            <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
+              <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 85%, ${seasonHue ? `hsl(${seasonHue} 85% 55% / .22)` : "var(--accent)"} 0%, transparent 65%)` }} />
+              <img src={e.image_url} alt={e.name} className="relative h-[92%] w-auto max-w-full object-contain object-bottom [mask-image:linear-gradient(to_top,black_55%,transparent_98%)]" />
+            </div>
+          )}
+          <nav className="absolute right-0 top-0 flex h-full w-12 flex-col items-stretch gap-1 border-l border-white/10 bg-black/50 py-4" aria-label="Dossier sections">
           {([["lore", "Lore"], ["powers", "Powers"], ["bonds", "Bonds"], ["progress", "Progress"]] as const).map(([t, label], i) => {
             const active = dossierTab === t;
             const accent = seasonHue ? `hsl(${seasonHue} 85% 60%)` : "var(--accent)";
@@ -700,7 +701,8 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
               </button>
             );
           })}
-        </nav>
+          </nav>
+        </div>
       </div>
       <AbilityInfoDialog name={abilityInfo} wielder={e.name} onClose={() => setAbilityInfo(null)} />
     </motion.div>

@@ -175,7 +175,24 @@ function JourneyGraph({ rows }: { rows: Array<{ id: string; series?: { title?: s
   );
 }
 
+/** Description with "VER MAS >>" expand for overflowing text. */
+function DescriptionBlock({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > 700;
+  return (
+    <div>
+      <p className={`whitespace-pre-line text-foreground/85 ${!open && long ? "line-clamp-6" : ""}`}>{text}</p>
+      {long && (
+        <button onClick={() => setOpen((o) => !o)} className="mt-1 text-xs font-semibold uppercase tracking-widest text-accent hover:underline">
+          {open ? "VER MENOS <<" : "VER MAS >>"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from: DOMRect | null; onClose: () => void; isAdmin: boolean; onOpen: (target: Entity) => void }) {
+  const qc = useQueryClient();
   const { data: notes } = useQuery(notesQuery(e.id));
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
   const combat = e.kind === "character" ? getCombatStats(e.stats) : null;
@@ -265,6 +282,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
   useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, []);
   // Hide all navigation while the dossier is open.
   useEffect(() => {
@@ -286,11 +304,19 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
       onTouchEnd={onTouchEnd}
       style={(seasonHue ? { boxShadow: `inset 0 0 140px hsl(${seasonHue} 85% 55% / .14)` } : {}) as MotionStyle}
     >
-      <div className="mx-auto grid max-w-[90rem] lg:grid-cols-[14rem_minmax(0,1fr)_4.5rem]" onClick={(ev) => ev.stopPropagation()}>
+      {/* Tactical HUD frame — grid, corner crosshairs, coordinate readout */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.05]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+      {(["top-3 left-3 border-t border-l", "top-3 right-3 border-t border-r", "bottom-3 left-3 border-b border-l", "bottom-3 right-3 border-b border-r"] as const).map((pos) => (
+        <span key={pos} className={`pointer-events-none absolute h-5 w-5 border-white/25 ${pos}`} />
+      ))}
+      <span className="pointer-events-none absolute left-4 top-4 font-mono text-[9px] uppercase tracking-widest text-white/30">
+        SCU // {e.name.slice(0, 12).toUpperCase()} — {String(Math.max(seasonIdx + 1, 1)).padStart(2, "0")} / {String(Math.max(seasons.length, 1)).padStart(2, "0")}
+      </span>
+      <div className="relative mx-auto grid max-w-[90rem] lg:grid-cols-[14rem_minmax(0,1fr)_4.5rem]" onClick={(ev) => ev.stopPropagation()}>
         {/* Column 1 — vertical thumbnail rail */}
         <aside className="hidden flex-col border-r border-white/10 bg-black/40 p-3 lg:flex">
           <p className="mb-3 px-1 font-display text-lg tracking-widest text-accent">SCU</p>
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+          <div ref={railRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
             {/* Overview thumb */}
             <button
               onClick={() => setSeasonIdx(-1)}
@@ -329,6 +355,12 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                 </button>
               );
             })}
+          </div>
+          {/* SCROLL track */}
+          <div className="mt-2 flex flex-col items-center gap-0.5 border-t border-white/10 pt-2 text-white/40">
+            <button aria-label="Scroll up" onClick={() => railRef.current?.scrollBy({ top: -120, behavior: "smooth" })} className="hover:text-accent">▲</button>
+            <span className="text-[8px] uppercase tracking-[0.3em]">Scroll</span>
+            <button aria-label="Scroll down" onClick={() => railRef.current?.scrollBy({ top: 120, behavior: "smooth" })} className="hover:text-accent">▼</button>
           </div>
         </aside>
         {/* Mobile season chips fallback */}
@@ -424,7 +456,46 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             ))}
           </div>
           <SketchGallery images={e.sketches} name={e.name} />
-          {dossierTab === "lore" && e.description && <p className="whitespace-pre-line text-foreground/85">{e.description}</p>}
+          {/* Season-scoped intel — role, status, abilities, scoped notes for selected season */}
+          {seasonIdx >= 0 && seasons[seasonIdx] && (() => {
+            const r = seasons[seasonIdx]!;
+            const scopedNotes = (notes ?? []).filter((n) => n.text.startsWith("[scope]") && r.series?.title && n.text.includes(r.series.title));
+            const seasonAbilities = (charAbilities ?? []).filter((ca) => !ca.series_id || ca.series_id === r.series_id);
+            return (
+              <div className="rounded-xl border border-white/10 bg-black/50 p-4 backdrop-blur-sm">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="font-display text-sm uppercase tracking-widest" style={{ color: seasonHue ? `hsl(${seasonHue} 85% 65%)` : "var(--accent)" }}>{r.series?.title}</span>
+                  {r.arc_role && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent">{r.arc_role}</span>}
+                  {r.status && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase text-muted-foreground">{r.status}</span>}
+                </div>
+                <p className="mb-2 text-xs text-muted-foreground">{r.role_in_series ?? "Missing role / story"}</p>
+                {seasonAbilities.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {seasonAbilities.map((ca) => <AbilityBadge key={ca.id} name={ca.ability_key} />)}
+                  </div>
+                )}
+                {scopedNotes.length > 0 && (
+                  <ul className="mt-2 grid gap-1 text-xs text-muted-foreground">
+                    {scopedNotes.map((n) => <li key={n.id}>· {n.text.replace(/^\[scope\]\s*/, "")}</li>)}
+                  </ul>
+                )}
+                {isAdmin && (
+                  <input
+                    className="mt-3 h-7 w-full rounded-md border border-white/15 bg-black/40 px-2 text-xs"
+                    placeholder="Season role / story note…"
+                    defaultValue={r.role_in_series ?? ""}
+                    onBlur={async (ev) => {
+                      const v = ev.target.value.trim();
+                      if (v === (r.role_in_series ?? "")) return;
+                      const { error } = await supabase.from("series_characters").update({ role_in_series: v || null }).eq("id", r.id);
+                      if (error) toast.error(error.message); else { toast.success("Season note saved"); void qc.invalidateQueries({ queryKey: ["character-series", e.id] }); }
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })()}
+          {dossierTab === "lore" && e.description && <DescriptionBlock text={e.description} />}
           {dossierTab === "lore" && combat && (
             <div className="relative overflow-hidden rounded-xl border border-white/10 bg-secondary/20 p-4">
               <AbilityCardCanvas abilities={e.abilities} theme={e.card_theme} className="pointer-events-none absolute inset-0 h-full w-full opacity-20 mix-blend-screen" />

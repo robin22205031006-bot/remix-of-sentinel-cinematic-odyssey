@@ -30,6 +30,7 @@ import { CompareSentinel } from "./compare-sentinel";
 import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
 import { AbilityCardCanvas } from "./ability-canvas";
 import { KineticText } from "./kinetic-text";
+import { useUiToggles } from "@/lib/ui-toggles";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
 import { Heart } from "lucide-react";
 import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
@@ -194,6 +195,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const { data: allChars } = useQuery({ ...entitiesQuery(["character"]), enabled: e.kind === "character" && dossierTab === "progress" });
   const { data: compareRows } = useQuery({ ...characterSeriesQuery(journeyCompareId), enabled: !!journeyCompareId });
   const compareSeasons = (compareRows ?? []).filter((r) => r.series);
+  const uiToggles = useUiToggles();
   const seasons = (seriesRows ?? []).filter((r) => r.series);
   const SEASON_HUES = [262, 200, 150, 20, 340, 90, 180];
   const seasonHue = seasonIdx >= 0 && seasons.length ? SEASON_HUES[seasonIdx % SEASON_HUES.length] : null;
@@ -465,12 +467,12 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           {dossierTab === "bonds" && <EntityLinks entity={e} isAdmin={isAdmin} onOpen={onOpen} />}
           {dossierTab === "bonds" && e.kind === "character" && <CharacterRelationships entity={e} isAdmin={isAdmin} onOpen={onOpen} />}
           {dossierTab === "bonds" && e.kind !== "character" && <OrgHierarchy entity={e} onOpen={onOpen} />}
-          {dossierTab === "bonds" && e.kind === "character" && <SeriesAppearances entity={e} />}
+          {dossierTab === "bonds" && e.kind === "character" && uiToggles.showSeriesAppearances && <SeriesAppearances entity={e} />}
           {dossierTab === "bonds" && e.kind === "character" && <CompareSentinel open={comparing} onOpenChange={setComparing} entity={e} />}
           {dossierTab === "progress" && (
             <div className="grid gap-4">
-              {seasons.length > 1 && <JourneyGraph rows={seasons} />}
-              {e.kind === "character" && (
+              {uiToggles.showJourneyGraph && seasons.length > 1 && <JourneyGraph rows={seasons} />}
+              {uiToggles.showJourneyGraph && e.kind === "character" && (
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Compare journey:</span>
                   <select
@@ -483,10 +485,10 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                   </select>
                 </div>
               )}
-              {journeyCompareId && compareSeasons.length > 0 && (
+              {uiToggles.showJourneyGraph && journeyCompareId && compareSeasons.length > 0 && (
                 <JourneyGraph rows={compareSeasons} />
               )}
-              {journeyCompareId && compareSeasons.length === 0 && (
+              {uiToggles.showJourneyGraph && journeyCompareId && compareSeasons.length === 0 && (
                 <p className="text-xs text-muted-foreground">No series data for the compared character.</p>
               )}
               <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Ability progress by season</h4>

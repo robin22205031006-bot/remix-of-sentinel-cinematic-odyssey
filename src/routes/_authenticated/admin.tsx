@@ -20,6 +20,7 @@ import { AdminAudio } from "@/components/admin-audio";
 import { AdminContradictions } from "@/components/admin-contradictions";
 import { AdminCharacterAbilities } from "@/components/admin-character-abilities";
 import { AdminAccordion } from "@/components/admin-accordion";
+import { AdminUiToggles } from "@/components/admin-ui-toggles";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -245,6 +246,7 @@ function Admin() {
       {isAdmin && <AdminAccordion title="Typography & Theme"><AdminTypography /><AdminAppearance /></AdminAccordion>}
       {isAdmin && <AdminAccordion title="Ability Assignments"><AdminCharacterAbilities /></AdminAccordion>}
       {isAdmin && <AdminAccordion title="Audio Controls"><AdminAudio /></AdminAccordion>}
+      {isAdmin && <AdminAccordion title="Reader UI Toggles"><AdminUiToggles /></AdminAccordion>}
       {isAdmin && <AdminAccordion title="Navigation Visibility"><AdminNavVisibility /></AdminAccordion>}
       <AdminAccordion title="Episode Drafts & Banned Words">
         {isAdmin && <AdminEpisodes />}

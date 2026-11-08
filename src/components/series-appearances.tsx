@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { BookMarked } from "lucide-react";
 import { characterSeriesQuery, seriesStatusClass } from "@/lib/series";
+import { useUiToggles } from "@/lib/ui-toggles";
 import type { Entity } from "@/lib/entities";
 
 /**
@@ -11,6 +12,7 @@ import type { Entity } from "@/lib/entities";
  */
 export function SeriesAppearances({ entity }: { entity: Entity }) {
   const { data: rows } = useQuery(characterSeriesQuery(entity.id));
+  const ui = useUiToggles();
   const list = (rows ?? []).filter((r) => r.series);
   if (list.length === 0) return null;
 
@@ -33,7 +35,7 @@ export function SeriesAppearances({ entity }: { entity: Entity }) {
               title={r.role_in_series ?? undefined}
             >
               <span className="max-w-40 truncate font-medium">{s.title}</span>
-              {r.arc_role && (
+              {ui.showArcRoles && r.arc_role && (
                 <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent">
                   {r.arc_role}
                 </span>

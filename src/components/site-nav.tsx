@@ -115,12 +115,21 @@ export function SiteNav() {
 
   const autoHidden = useNavHidden();
   const [hudMode, setHudMode] = useState(navMode() === "hud");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   useEffect(() => {
     const sync = () => setHudMode(navMode() === "hud");
     window.addEventListener("scu-nav-mode", sync);
     window.addEventListener("storage", sync);
     return () => { window.removeEventListener("scu-nav-mode", sync); window.removeEventListener("storage", sync); };
   }, []);
+
+  // Render an empty shell until mounted: nav depends on localStorage/auth state
+  // that differs between SSR and the client — rendering real content pre-mount
+  // caused hydration mismatches.
+  if (!mounted) {
+    return <nav className="fixed inset-x-0 top-3 z-40 flex justify-center" aria-hidden="true"><div className="h-11 w-64" /></nav>;
+  }
 
   return (
     <nav

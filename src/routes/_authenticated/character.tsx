@@ -18,6 +18,23 @@ export const Route = createFileRoute("/_authenticated/character")({
   validateSearch: (s: Record<string, unknown>): { e?: string } =>
     typeof s["e"] === "string" ? { e: s["e"] } : {},
   head: () => ({ meta: [{ title: "Character — SCU" }] }),
+  errorComponent: ({ error }) => (
+    <div className="grid min-h-screen place-items-center bg-[#020408] p-8 text-center">
+      <div>
+        <p className="font-display text-xl text-accent">Dossier failed to load</p>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
+        <Link to="/characters" className="mt-4 inline-block text-xs uppercase tracking-widest text-accent hover:underline">← Back to characters</Link>
+      </div>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="grid min-h-screen place-items-center bg-[#020408] p-8 text-center">
+      <div>
+        <p className="font-display text-xl text-accent">Character not found</p>
+        <Link to="/characters" className="mt-4 inline-block text-xs uppercase tracking-widest text-accent hover:underline">← Back to characters</Link>
+      </div>
+    </div>
+  ),
   component: CharacterDossier,
 });
 
@@ -76,7 +93,7 @@ function CharacterDossier() {
   const [seasonIdx, setSeasonIdx] = useState(-1);
   const [descOpen, setDescOpen] = useState(false);
 
-  const { data: e } = useQuery({ ...entityByIdQuery(id ?? ""), enabled: !!id });
+  const { data: e, isError: entityError, error: entityErr } = useQuery({ ...entityByIdQuery(id ?? ""), enabled: !!id });
   const { data: notes } = useQuery({ ...notesQuery(id ?? ""), enabled: !!id });
   const { data: memberships } = useQuery({ ...characterSeriesQuery(id ?? ""), enabled: !!id && e?.kind === "character" });
   const { data: allSeries } = useQuery({ ...seriesQuery, enabled: e?.kind === "character" });
@@ -95,7 +112,21 @@ function CharacterDossier() {
   const seasonHue = seasonIdx >= 0 ? SEASON_HUES[seasonIdx % SEASON_HUES.length] : null;
   const accent = seasonHue ? `hsl(${seasonHue} 85% 60%)` : "var(--accent)";
 
-  if (!e) return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading dossier…</div>;
+  if (entityError) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-[#020408] p-8 text-center">
+        <div>
+          <p className="font-display text-xl text-accent">Dossier failed to load</p>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">{entityErr instanceof Error ? entityErr.message : "Unknown error"}</p>
+          <Link to="/characters" className="mt-4 inline-block text-xs uppercase tracking-widest text-accent hover:underline">← Back to characters</Link>
+        </div>
+      </div>
+    );
+  }
+  if (!e) {
+    if (!id) return <div className="grid min-h-screen place-items-center bg-[#020408] text-sm text-muted-foreground">No character selected.</div>;
+    return <div className="grid min-h-screen place-items-center bg-[#020408] text-sm text-muted-foreground">Loading dossier…</div>;
+  }
 
   const scopedNotes = activeSeason?.series?.title
     ? cleanNotes.filter((n) => n.text.includes(activeSeason.series!.title))

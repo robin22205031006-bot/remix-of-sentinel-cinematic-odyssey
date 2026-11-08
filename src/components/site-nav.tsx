@@ -4,6 +4,7 @@ import { Archive, BookMarked, BookOpen, Bot, Castle, Clock, EyeOff, FileLock, Ho
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useIsStaff, useSession } from "@/hooks/use-admin";
 import { useScuMute } from "@/hooks/use-scu-audio";
+import { setAnimationsEnabled, useAnimationsEnabled } from "@/lib/animations";
 import { useAppearance } from "@/hooks/use-appearance";
 import { supabase } from "@/integrations/supabase/client";
 import { STAFF_TAB, TABS, tabIndex } from "@/lib/nav";
@@ -43,6 +44,7 @@ export function SiteNav() {
     },
   });
   const { muted, toggleMute } = useScuMute();
+  const animOn = useAnimationsEnabled();
   const [ambient, setAmbient] = useState(false);
   const [hideSpoilers, setHideSpoilers] = useState(spoilersHidden);
   useEffect(() => onSpoilerChange(() => setHideSpoilers(spoilersHidden())), []);
@@ -173,6 +175,14 @@ export function SiteNav() {
           className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"
         >
           {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+        </button>
+        <button
+          aria-label={animOn ? "Disable cinematic animations" : "Enable cinematic animations"}
+          title={animOn ? "Animations on" : "Animations off"}
+          onClick={() => setAnimationsEnabled(!animOn)}
+          className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${animOn ? "text-accent" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
         </button>
         <button
           aria-label={ambient ? "Stop ambient music" : "Play ambient music"}

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { abilityDef } from "@/lib/abilities";
+import { useAnimationsEnabled } from "@/lib/animations";
 
 /** Shared rAF loop: pauses offscreen/hidden, handles DPR resize. */
 function useCanvasLoop(draw: (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, dpr: number) => void, deps: unknown[] = []) {
@@ -116,6 +117,7 @@ interface Props {
 }
 
 export function AbilityCardCanvas({ abilities, theme: themeOverride, className, density = 1 }: Props) {
+  const animOn = useAnimationsEnabled();
   const derived = pickTheme(abilities);
   const theme: ThemeKey = (themeOverride && themeOverride in PALETTES ? themeOverride : derived) as ThemeKey;
   const colors = PALETTES[theme];
@@ -123,6 +125,7 @@ export function AbilityCardCanvas({ abilities, theme: themeOverride, className, 
 
   const ref = useCanvasLoop((ctx, w, h, t) => {
     ctx.clearRect(0, 0, w, h);
+    if (!animOn) return;
     const count = Math.floor(46 * density);
     const boost = mouse.current.down ? 2.2 : 1;
     // ambient gradient
@@ -213,12 +216,14 @@ export function AbilityCardCanvas({ abilities, theme: themeOverride, className, 
 /* --------------------------- CrimsonBloodlineTheme ------------------------- */
 
 export function CrimsonBloodlineTheme({ className }: { className?: string }) {
+  const animOn = useAnimationsEnabled();
   const mouse = useRef({ x: -9999, y: -9999 });
   const pulses = useRef<Array<{ x: number; y: number; r: number; a: number }>>([]);
 
   const ref = useCanvasLoop((ctx, w, h, t) => {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, w, h);
+    if (!animOn) return;
     const cx = w / 2, cy = h / 2;
     const beat = 1 + Math.sin(t * 1.8) * 0.06;
     const nodes: Array<[number, number, number]> = [];
@@ -305,11 +310,13 @@ export function CrimsonBloodlineTheme({ className }: { className?: string }) {
 /* --------------------------- CyanNeuralPlexusTheme ------------------------- */
 
 export function CyanNeuralPlexusTheme({ className }: { className?: string }) {
+  const animOn = useAnimationsEnabled();
   const mouse = useRef({ x: -999, y: -999 });
   const nodes = useRef<Array<{ x: number; y: number; z: number; vx: number; vy: number; vz: number }>>([]);
   const init = useRef(false);
 
   const ref = useCanvasLoop((ctx, w, h, t) => {
+    if (!animOn) { ctx.fillStyle = "#020617"; ctx.fillRect(0, 0, w, h); return; }
     if (!init.current || nodes.current.length !== 90) {
       nodes.current = Array.from({ length: 90 }, (_, i) => ({
         x: ((i * 73) % 100) / 100 - 0.5,

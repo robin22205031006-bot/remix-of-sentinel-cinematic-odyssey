@@ -29,6 +29,7 @@ import { StatRadar } from "./stat-radar";
 import { CompareSentinel } from "./compare-sentinel";
 import { CharacterRelationships, OrgHierarchy } from "./lineage-panel";
 import { AbilityCardCanvas } from "./ability-canvas";
+import { KineticText } from "./kinetic-text";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
 import { Heart } from "lucide-react";
 import { AbilityBadge, AbilityBadgeRow } from "./ability-badge";
@@ -340,7 +341,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           )}
           <div className="relative flex items-start justify-between gap-4">
             <h3 className="flex flex-wrap items-center gap-3 font-display text-5xl font-black uppercase leading-[0.95] tracking-tight text-white sm:text-6xl lg:max-w-[55%]" style={{ textShadow: `0 0 30px ${seasonHue ? `hsl(${seasonHue} 85% 60% / .45)` : "var(--accent)"}66` }}>
-            {e.name}
+            <KineticText text={e.name} className="relative font-display text-5xl font-bold uppercase tracking-wide text-white drop-shadow-[0_0_24px_rgba(168,85,247,0.45)] sm:text-6xl" />
             {tierDef(e.character_tier) && (
               <span
                 className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider"

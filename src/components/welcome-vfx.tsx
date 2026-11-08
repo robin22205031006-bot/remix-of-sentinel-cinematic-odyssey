@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { KineticText } from "@/components/kinetic-text";
 
 const KEY = "scu-welcomed";
 
@@ -48,12 +49,12 @@ export function WelcomeVfx() {
           Sentinels Cinematic Universe
         </motion.p>
         <motion.h1
-          initial={{ opacity: 0, y: 30, scale: 0.92 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: "spring", stiffness: 120, damping: 18, delay: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
           className="font-display text-5xl font-bold glow-text sm:text-7xl"
         >
-          Welcome To The Universe
+          <KineticText text="Welcome To The Universe" delay={0.3} />
         </motion.h1>
         <motion.div
           initial={{ scaleX: 0 }}

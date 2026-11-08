@@ -224,6 +224,50 @@ function CharacterDossier() {
               {activeSeason ? `${activeSeason.series?.title} · ${ctxSeason ?? "All seasons"}` : "Overview"}
             </p>
 
+            {/* Badges — tier, role, alias (all viewports) */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {e.character_tier && (
+                <span className="rounded-full border border-accent/50 bg-accent/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-accent">{e.character_tier}</span>
+              )}
+              {[e.role, e.category, e.alias ?? (e.stats as Record<string, string> | null)?.["alias"]].filter(Boolean).map((t) => (
+                <span key={t} className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/80">{t}</span>
+              ))}
+            </div>
+
+            {/* Mobile series/season selector — left rail is desktop-only */}
+            {e.kind === "character" && seasons.length > 0 && (
+              <div className="mt-3 flex gap-1.5 overflow-x-auto lg:hidden [scrollbar-width:none]">
+                <button
+                  onClick={() => setSeasonIdx(-1)}
+                  className={`shrink-0 rounded-full px-3 py-1 text-[10px] uppercase ${seasonIdx === -1 ? "bg-accent text-accent-foreground" : "bg-white/10 text-muted-foreground"}`}
+                >Overview</button>
+                {seasons.map((r, i) => (
+                  <button
+                    key={r.id}
+                    onClick={() => { setSeasonIdx(i); setCtxSeason(null); }}
+                    className={`shrink-0 rounded-full px-3 py-1 text-[10px] uppercase ${seasonIdx === i ? "bg-accent text-accent-foreground" : "bg-white/10 text-muted-foreground"}`}
+                  >
+                    {r.series?.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Mobile/tablet tab bar — right rail is desktop-only */}
+            <div className="mt-4 flex gap-1.5 lg:hidden" role="tablist">
+              {TABS.map(([t, label]) => (
+                <button
+                  key={t}
+                  role="tab"
+                  aria-selected={tab === t}
+                  onClick={() => { sfx.pop(); setTab(t); }}
+                  className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider ${tab === t ? "bg-accent text-accent-foreground" : "bg-white/10 text-muted-foreground"}`}
+                >
+                  {label.split(" /")[0]}
+                </button>
+              ))}
+            </div>
+
             {/* Season intel */}
             {activeSeason && (
               <div className="mt-4 rounded-xl border border-white/10 bg-black/50 p-4 backdrop-blur-sm">

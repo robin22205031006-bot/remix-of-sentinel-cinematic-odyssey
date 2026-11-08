@@ -12,7 +12,7 @@ export function ThemeDrawer({ open, onOpenChange }: { open?: boolean; onOpenChan
   const plainThemes = THEMES.filter((t) => !t.live);
   const visible = tab === "live" ? liveThemes : plainThemes;
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet {...(open !== undefined ? { open } : {})} {...(onOpenChange ? { onOpenChange } : {})}>
       <SheetTrigger asChild>
         <button aria-label="Appearance" className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-accent hover:glow-ring">
           <Palette className="h-3.5 w-3.5" />

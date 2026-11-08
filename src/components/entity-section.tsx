@@ -125,6 +125,54 @@ const CardBody = memo(function CardBody({ e, showKind }: { e: Entity; showKind: 
 });
 
 /** Opened state: the card shifts to the top-left corner, details open beside it. */
+/** Narrative trajectory: prominence score per series from arc_role/status. */
+function journeyScore(r: { arc_role?: string | null; status?: string | null; role_in_series?: string | null }): number {
+  const role = `${r.arc_role ?? ""} ${r.role_in_series ?? ""}`.toLowerCase();
+  if (/main\s*protagonist|lead\s*protagonist/.test(role)) return 5;
+  if (/protagonist/.test(role)) return 4;
+  if (/anti-?hero/.test(role)) return 3;
+  if (/antagonist|anti-?villain|villain/.test(role)) return 3;
+  if (/legend/.test(role)) return 4;
+  if (/cameo/.test(role)) return 1;
+  if (/support|mentor|side/.test(role)) return 2;
+  const st = (r.status ?? "").toLowerCase();
+  if (st === "dead" || st === "presumed dead") return 1;
+  if (st === "alive") return 3;
+  return 2;
+}
+
+function JourneyGraph({ rows }: { rows: Array<{ id: string; series?: { title?: string | null } | null; arc_role?: string | null; status?: string | null; role_in_series?: string | null }> }) {
+  const pts = rows.map((r) => ({ label: r.series?.title ?? "?", score: journeyScore(r), role: r.arc_role ?? r.role_in_series ?? "" }));
+  const W = 560, H = 120, pad = 24;
+  const bw = (W - pad * 2) / Math.max(pts.length, 1);
+  return (
+    <div className="rounded-xl border border-white/10 bg-secondary/20 p-4">
+      <h4 className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Journey trajectory</h4>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+        {[1, 2, 3, 4, 5].map((g) => (
+          <line key={g} x1={pad} x2={W - pad} y1={H - pad - (g / 5) * (H - pad * 2)} y2={H - pad - (g / 5) * (H - pad * 2)} stroke="rgba(255,255,255,0.06)" />
+        ))}
+        {pts.map((p, i) => {
+          const x = pad + i * bw + bw / 2;
+          const h = (p.score / 5) * (H - pad * 2);
+          const y = H - pad - h;
+          return (
+            <g key={i}>
+              <rect x={x - bw * 0.32} y={y} width={bw * 0.64} height={h} rx={3} fill="var(--accent)" opacity={0.75} />
+              <text x={x} y={H - 8} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.5)">{p.label.replace(/^The\s*/i, "").slice(0, 10)}</text>
+              <text x={x} y={y - 4} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.7)">{p.role || `Lv${p.score}`}</text>
+            </g>
+          );
+        })}
+        <polyline
+          points={pts.map((p, i) => `${pad + i * bw + bw / 2},${H - pad - (p.score / 5) * (H - pad * 2)}`).join(" ")}
+          fill="none" stroke="var(--accent)" strokeWidth={1.5} strokeDasharray="3 3" opacity={0.6}
+        />
+      </svg>
+    </div>
+  );
+}
+
 function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from: DOMRect | null; onClose: () => void; isAdmin: boolean; onOpen: (target: Entity) => void }) {
   const { data: notes } = useQuery(notesQuery(e.id));
   const stats = Object.entries((e.stats as Record<string, string>) ?? {});
@@ -408,6 +456,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
           {dossierTab === "bonds" && e.kind === "character" && <CompareSentinel open={comparing} onOpenChange={setComparing} entity={e} />}
           {dossierTab === "progress" && (
             <div className="grid gap-4">
+              {seasons.length > 1 && <JourneyGraph rows={seasons} />}
               <h4 className="text-[11px] uppercase tracking-widest text-muted-foreground">Ability progress by season</h4>
               {seasons.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No series data for this character.</p>

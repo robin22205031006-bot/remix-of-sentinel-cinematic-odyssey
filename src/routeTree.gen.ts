@@ -29,6 +29,7 @@ import { Route as AuthenticatedOrgsRouteImport } from './routes/_authenticated/o
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedReaderRouteImport } from './routes/_authenticated/reader'
 import { Route as AuthenticatedSeriesRouteImport } from './routes/_authenticated/series'
+import { Route as AuthenticatedStoryRouteImport } from './routes/_authenticated/story'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
 import { Route as AuthenticatedVaultRouteImport } from './routes/_authenticated/vault'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -133,6 +134,11 @@ const AuthenticatedSeriesRoute = AuthenticatedSeriesRouteImport.update({
   path: '/series',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStoryRoute = AuthenticatedStoryRouteImport.update({
+  id: '/story',
+  path: '/story',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/reader': typeof AuthenticatedReaderRoute
   '/series': typeof AuthenticatedSeriesRoute
+  '/story': typeof AuthenticatedStoryRoute
   '/timeline': typeof AuthenticatedTimelineRoute
   '/vault': typeof AuthenticatedVaultRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/reader': typeof AuthenticatedReaderRoute
   '/series': typeof AuthenticatedSeriesRoute
+  '/story': typeof AuthenticatedStoryRoute
   '/timeline': typeof AuthenticatedTimelineRoute
   '/vault': typeof AuthenticatedVaultRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reader': typeof AuthenticatedReaderRoute
   '/_authenticated/series': typeof AuthenticatedSeriesRoute
+  '/_authenticated/story': typeof AuthenticatedStoryRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
   '/_authenticated/vault': typeof AuthenticatedVaultRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reader'
     | '/series'
+    | '/story'
     | '/timeline'
     | '/vault'
     | '/.lovable/oauth/consent'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reader'
     | '/series'
+    | '/story'
     | '/timeline'
     | '/vault'
     | '/.lovable/oauth/consent'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/reader'
     | '/_authenticated/series'
+    | '/_authenticated/story'
     | '/_authenticated/timeline'
     | '/_authenticated/vault'
     | '/.lovable/oauth/consent'
@@ -451,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSeriesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/story': {
+      id: '/_authenticated/story'
+      path: '/story'
+      fullPath: '/story'
+      preLoaderRoute: typeof AuthenticatedStoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/timeline': {
       id: '/_authenticated/timeline'
       path: '/timeline'
@@ -490,6 +509,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReaderRoute: typeof AuthenticatedReaderRoute
   AuthenticatedSeriesRoute: typeof AuthenticatedSeriesRoute
+  AuthenticatedStoryRoute: typeof AuthenticatedStoryRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   AuthenticatedVaultRoute: typeof AuthenticatedVaultRoute
 }
@@ -509,6 +529,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReaderRoute: AuthenticatedReaderRoute,
   AuthenticatedSeriesRoute: AuthenticatedSeriesRoute,
+  AuthenticatedStoryRoute: AuthenticatedStoryRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
   AuthenticatedVaultRoute: AuthenticatedVaultRoute,
 }

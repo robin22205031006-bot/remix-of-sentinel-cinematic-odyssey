@@ -3,6 +3,7 @@ export const TABS = [
   { to: "/characters", label: "Characters", icon: "chars" },
   { to: "/abilities", label: "Abilities", icon: "abilities" },
   { to: "/archive", label: "Archive", icon: "archive" },
+  { to: "/story", label: "Story", icon: "book" },
   { to: "/map", label: "Map", icon: "map" },
   { to: "/fandom", label: "Fandom", icon: "fandom" },
   { to: "/ai", label: "AI Box", icon: "ai" },

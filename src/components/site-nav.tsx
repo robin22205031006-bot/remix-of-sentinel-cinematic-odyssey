@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, BookMarked, Bot, Castle, Clock, EyeOff, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Music, Network, Shield, Sparkles, User, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
+import { Archive, BookMarked, BookOpen, Bot, Castle, Clock, EyeOff, FileLock, Home, LogOut, Map as MapIcon, MessagesSquare, Music, Network, Shield, Sparkles, User, Users, Volume2, VolumeX, WandSparkles, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useIsStaff, useSession } from "@/hooks/use-admin";
 import { useScuMute } from "@/hooks/use-scu-audio";
@@ -17,7 +17,7 @@ import { UniversalSearch } from "./universal-search";
 import { MobileMenu } from "./mobile-menu";
 import { Download } from "lucide-react";
 
-const ICONS = { home: Home, orgs: Shield, chars: Users, abilities: WandSparkles, archive: Archive, series: BookMarked, time: Clock, map: MapIcon, graph: Network, clans: Castle, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
+const ICONS = { home: Home, orgs: Shield, chars: Users, abilities: WandSparkles, archive: Archive, series: BookMarked, book: BookOpen, time: Clock, map: MapIcon, graph: Network, clans: Castle, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
 
 export function SiteNav() {
   const isStaff = useIsStaff();

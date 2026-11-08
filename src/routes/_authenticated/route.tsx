@@ -10,6 +10,14 @@ function withTimeout<T>(p: PromiseLike<T>, ms: number): Promise<T | "__timeout__
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
+    // In offline mode (no real Supabase), skip auth checks so the app renders
+    // instead of crashing. RLS still guards every query when a real backend exists.
+    const hasSupabase = !!(
+      import.meta.env["VITE_SUPABASE_URL"] ||
+      (typeof process !== "undefined" && process.env?.["SUPABASE_URL"])
+    );
+    if (!hasSupabase) return;
+
     // Never hang navigation on a slow Supabase round-trip: on timeout we let the
     // page render anyway — RLS still guards every query, and the session cache
     // resolves the real user a moment later.

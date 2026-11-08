@@ -88,6 +88,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // SPA mode: the app is fully client-rendered. SSR 500s on TanStack Start
+  // are eliminated because no route renders on the server; server functions
+  // (auth-gated ingest/AI/roles) still work over fetch.
   ssr: false,
   head: () => ({
     meta: [

@@ -153,8 +153,8 @@ function RootComponent() {
     };
   }, []);
   useEffect(() => {
-    if (import.meta.env.PROD && "serviceWorker" in navigator) {
-      void navigator.serviceWorker.register("/sw.js").catch(() => {});
+    if ("serviceWorker" in navigator) {
+      void navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => void r.unregister())).catch(() => {});
     }
   }, []);
   useEffect(() => {

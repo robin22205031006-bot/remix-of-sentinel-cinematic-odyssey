@@ -14,6 +14,8 @@ import { navMode } from "./floating-nav";
 import { DayNightToggle } from "./day-night-toggle";
 import { ThemeDrawer } from "./theme-drawer";
 import { UniversalSearch } from "./universal-search";
+import { MobileMenu } from "./mobile-menu";
+import { Download } from "lucide-react";
 
 const ICONS = { home: Home, orgs: Shield, chars: Users, abilities: WandSparkles, archive: Archive, series: BookMarked, time: Clock, map: MapIcon, graph: Network, clans: Castle, fandom: MessagesSquare, ai: Bot, vault: FileLock, admin: Sparkles };
 
@@ -148,6 +150,17 @@ export function SiteNav() {
           })}
         </div>
         <span className="mx-1 h-4 w-px bg-border" />
+        <MobileMenu
+          main={tabs.map((t) => ({ to: t.to, label: t.label, icon: ICONS[t.icon] }))}
+          extra={[
+            { to: "/series", label: "Series", icon: BookMarked },
+            { to: "/orgs", label: "Organizations", icon: Shield },
+            { to: "/install", label: "Install app", icon: Download },
+          ]}
+        />
+        <Link to="/install" aria-label="Install app" title="Install app" className="hidden h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground md:grid">
+          <Download className="h-3.5 w-3.5" />
+        </Link>
         <UniversalSearch />
         <ThemeDrawer />
         <button aria-label="Zoom out text" onClick={() => zoom(-1)} className="hidden h-7 w-7 place-items-center rounded-full text-muted-foreground hover:text-foreground sm:grid"><ZoomOut className="h-3.5 w-3.5" /></button>

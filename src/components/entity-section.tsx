@@ -21,7 +21,7 @@ import { EntityDialog } from "./entity-dialog";
 import { EntityGridSkeleton } from "./route-skeleton";
 import { EntityLinks } from "./entity-links";
 import { SeriesAppearances } from "./series-appearances";
-import { characterSeriesQuery } from "@/lib/series";
+import { characterSeriesQuery, seriesQuery } from "@/lib/series";
 import { setNavHidden } from "@/lib/nav-visibility";
 import { MergeEntityDialog } from "./merge-entity-dialog";
 import { SketchGallery } from "./sketch-gallery";
@@ -201,6 +201,9 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const [dossierTab, setDossierTab] = useState<"lore" | "powers" | "bonds" | "progress">("lore");
   const [seasonIdx, setSeasonIdx] = useState(0);
   const { data: seriesRows } = useQuery({ ...characterSeriesQuery(e.id), enabled: e.kind === "character" });
+  const { data: allSeries } = useQuery({ ...seriesQuery, enabled: e.kind === "character" });
+  const [openSeries, setOpenSeries] = useState<string | null>(null);
+  const [ctxSeason, setCtxSeason] = useState<string | null>(null);
   const { data: charAbilities } = useQuery({
     queryKey: ["character-abilities", e.id],
     enabled: e.kind === "character",
@@ -331,28 +334,63 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                 <span className="block text-[9px] uppercase text-muted-foreground">Overview</span>
               </span>
             </button>
-            {seasons.map((r, i) => {
-              const hue = SEASON_HUES[i % SEASON_HUES.length];
-              const active = i === seasonIdx;
+            {/* Universe series accordion — expand a series to pick a season */}
+            {(allSeries ?? []).map((s) => {
+              const hue = SEASON_HUES[(allSeries ?? []).indexOf(s) % SEASON_HUES.length];
+              const open = openSeries === s.id;
+              const seasonList = s.season_names?.length
+                ? s.season_names
+                : s.season_count
+                  ? Array.from({ length: s.season_count }, (_, i) => `Season ${i + 1}`)
+                  : ["Season 1"];
+              // Does this character belong to this series?
+              const memberIdx = seasons.findIndex((r) => r.series?.id === s.id || r.series?.title === s.title);
+              const member = memberIdx >= 0 ? seasons[memberIdx] : null;
+              const pickSeason = (label: string) => {
+                setCtxSeason(label);
+                if (memberIdx >= 0) setSeasonIdx(memberIdx);
+                else setSeasonIdx(-1);
+              };
               return (
-                <button
-                  key={r.id}
-                  onClick={() => setSeasonIdx(i)}
-                  className={`flex items-center gap-2 rounded-lg border p-2 text-left transition-all ${active ? "bg-white/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-                  style={{ borderLeft: `3px solid hsl(${hue} 85% 60%)`, ...(active ? { boxShadow: `0 0 14px hsl(${hue} 85% 60% / .3)` } : {}) }}
-                >
-                  <span className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary">
-                    {r.series?.cover_image_url ? (
-                      <img src={r.series.cover_image_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="grid h-full w-full place-items-center text-[9px] uppercase text-muted-foreground">{r.series?.title?.slice(0, 2)}</span>
-                    )}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-xs font-semibold uppercase tracking-wide">{r.series?.title}</span>
-                    {r.status && <span className="block text-[9px] uppercase" style={{ color: `hsl(${hue} 85% 65%)` }}>{r.status}</span>}
-                  </span>
-                </button>
+                <div key={s.id} className="overflow-hidden rounded-lg border border-white/10">
+                  <button
+                    onClick={() => setOpenSeries(open ? null : s.id)}
+                    className={`flex w-full items-center gap-2 p-2 text-left transition-all ${open ? "bg-white/10" : "bg-white/5 hover:bg-white/10"}`}
+                    style={{ borderLeft: `3px solid hsl(${hue} 85% 60%)`, ...(open ? { boxShadow: `0 0 14px hsl(${hue} 85% 60% / .3)` } : {}) }}
+                  >
+                    <span className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary">
+                      {s.cover_image_url ? <img src={s.cover_image_url} alt="" className="h-full w-full object-cover" /> : <span className="grid h-full w-full place-items-center text-[9px] uppercase text-muted-foreground">{s.title.slice(0, 2)}</span>}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-semibold uppercase tracking-wide">{s.title}</span>
+                      <span className="block text-[9px] uppercase text-muted-foreground">{member ? (member.status ?? "Member") : `${seasonList.length} season${seasonList.length > 1 ? "s" : ""}`}</span>
+                    </span>
+                    <span className={`text-[10px] text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}>›</span>
+                  </button>
+                  {open && (
+                    <div className="grid gap-0.5 border-t border-white/10 bg-black/30 p-1.5">
+                      <button
+                        onClick={() => { setCtxSeason(null); if (memberIdx >= 0) setSeasonIdx(memberIdx); }}
+                        className={`rounded px-2 py-1 text-left text-[10px] uppercase tracking-wide ${ctxSeason === null && memberIdx >= 0 ? "bg-accent/20 text-accent" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        All seasons{member ? ` · ${member.status}` : ""}
+                      </button>
+                      {seasonList.map((sn) => {
+                        const active = ctxSeason === sn;
+                        return (
+                          <button
+                            key={sn}
+                            onClick={() => pickSeason(sn)}
+                            className={`flex items-center justify-between rounded px-2 py-1 text-left text-[10px] uppercase tracking-wide ${active ? "bg-accent/20 text-accent" : "text-muted-foreground hover:text-foreground"}`}
+                          >
+                            <span className="truncate">{sn}</span>
+                            {member && <span className="ml-1 h-1 w-1 shrink-0 rounded-full" style={{ background: `hsl(${hue} 85% 60%)` }} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -464,7 +502,7 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
             return (
               <div className="rounded-xl border border-white/10 bg-black/50 p-4 backdrop-blur-sm">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="font-display text-sm uppercase tracking-widest" style={{ color: seasonHue ? `hsl(${seasonHue} 85% 65%)` : "var(--accent)" }}>{r.series?.title}</span>
+                  <span className="font-display text-sm uppercase tracking-widest" style={{ color: seasonHue ? `hsl(${seasonHue} 85% 65%)` : "var(--accent)" }}>{r.series?.title}{ctxSeason ? ` · ${ctxSeason}` : ""}</span>
                   {r.arc_role && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent">{r.arc_role}</span>}
                   {r.status && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase text-muted-foreground">{r.status}</span>}
                 </div>

@@ -749,7 +749,42 @@ function AbilityInfoDialog({ name, wielder, onClose }: { name: string | null; wi
 function ShowcaseView({ list, onOpen }: { list: Entity[]; onOpen: (e: Entity, ev: React.MouseEvent) => void }) {
   return (
     <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {list.map((e) => (
+      {list.map((e) =>
+        e.kind === "character" ? (
+        <Link
+          key={e.id}
+          data-card
+          to="/character"
+          search={{ e: e.id }}
+          className={`group relative block w-[78vw] max-w-xs shrink-0 snap-center overflow-hidden rounded-3xl text-left ${tierDef(e.character_tier)?.vfxClass ?? ""}`}
+          style={{ "--scu-aura": e.accent_glow ?? e.theme_color ?? "#a855f7", minHeight: "22rem" } as unknown as CSSProperties}
+        >
+          {e.image_url ? (
+            <img src={e.image_url} alt={e.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary via-background to-accent/20" />
+          )}
+          <AbilityCardCanvas abilities={e.abilities} theme={e.card_theme} className="pointer-events-none absolute inset-0 h-full w-full opacity-40 transition-opacity group-hover:opacity-75" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+          <div className="relative flex h-full min-h-[22rem] flex-col justify-between p-5">
+            <div className="flex justify-between">
+              {tierDef(e.character_tier) && (
+                <span className="rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest" style={{ borderColor: tierDef(e.character_tier)!.color, color: tierDef(e.character_tier)!.color }}>
+                  {e.character_tier}
+                </span>
+              )}
+              {e.theme_song_url && <ThemeSongButton url={e.theme_song_url} />}
+            </div>
+            <div>
+              <h3 className="font-display text-3xl font-bold text-white drop-shadow-lg">{e.name}</h3>
+              <p className="mt-1 line-clamp-2 text-sm text-white/75">{e.role ?? e.category ?? ""}</p>
+              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-white backdrop-blur">
+                View dossier →
+              </span>
+            </div>
+          </div>
+        </Link>
+        ) : (
         <button
           key={e.id}
           data-card
@@ -782,7 +817,7 @@ function ShowcaseView({ list, onOpen }: { list: Entity[]; onOpen: (e: Entity, ev
             </div>
           </div>
         </button>
-      ))}
+        ))}
     </div>
   );
 }
@@ -922,10 +957,14 @@ export function EntitySection({
                 style={{ "--scu-aura": e.accent_glow ?? e.theme_color ?? "#a855f7" } as unknown as MotionStyle}
               >
                 <AbilityCardCanvas abilities={e.abilities} theme={e.card_theme} className="pointer-events-none absolute inset-0 h-full w-full opacity-30 transition-opacity group-hover:opacity-60" />
-                <div className="flex min-w-0 flex-1 gap-4">
+                <Link
+                  to="/character"
+                  search={{ e: e.id }}
+                  className="flex min-w-0 flex-1 gap-4"
+                >
                   <Avatar e={e} size="h-16 w-16" />
                   <CardBody e={e} showKind={kinds.length > 1} />
-                </div>
+                </Link>
                 {e.theme_song_url && <ThemeSongButton url={e.theme_song_url} />}
                 {isAdmin && (
                   <div className="flex shrink-0 flex-col gap-1">

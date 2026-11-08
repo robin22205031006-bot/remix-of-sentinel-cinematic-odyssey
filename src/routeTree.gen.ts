@@ -19,6 +19,7 @@ import { Route as AuthenticatedAbilitiesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAiRouteImport } from './routes/_authenticated/ai'
 import { Route as AuthenticatedArchiveRouteImport } from './routes/_authenticated/archive'
+import { Route as AuthenticatedCharacterRouteImport } from './routes/_authenticated/character'
 import { Route as AuthenticatedCharactersRouteImport } from './routes/_authenticated/characters'
 import { Route as AuthenticatedClansRouteImport } from './routes/_authenticated/clans'
 import { Route as AuthenticatedFandomRouteImport } from './routes/_authenticated/fandom'
@@ -82,6 +83,11 @@ const AuthenticatedAiRoute = AuthenticatedAiRouteImport.update({
 const AuthenticatedArchiveRoute = AuthenticatedArchiveRouteImport.update({
   id: '/archive',
   path: '/archive',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCharacterRoute = AuthenticatedCharacterRouteImport.update({
+  id: '/character',
+  path: '/character',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCharactersRoute = AuthenticatedCharactersRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/ai': typeof AuthenticatedAiRoute
   '/archive': typeof AuthenticatedArchiveRoute
+  '/character': typeof AuthenticatedCharacterRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/clans': typeof AuthenticatedClansRoute
   '/fandom': typeof AuthenticatedFandomRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/ai': typeof AuthenticatedAiRoute
   '/archive': typeof AuthenticatedArchiveRoute
+  '/character': typeof AuthenticatedCharacterRoute
   '/characters': typeof AuthenticatedCharactersRoute
   '/clans': typeof AuthenticatedClansRoute
   '/fandom': typeof AuthenticatedFandomRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/ai': typeof AuthenticatedAiRoute
   '/_authenticated/archive': typeof AuthenticatedArchiveRoute
+  '/_authenticated/character': typeof AuthenticatedCharacterRoute
   '/_authenticated/characters': typeof AuthenticatedCharactersRoute
   '/_authenticated/clans': typeof AuthenticatedClansRoute
   '/_authenticated/fandom': typeof AuthenticatedFandomRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai'
     | '/archive'
+    | '/character'
     | '/characters'
     | '/clans'
     | '/fandom'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai'
     | '/archive'
+    | '/character'
     | '/characters'
     | '/clans'
     | '/fandom'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/ai'
     | '/_authenticated/archive'
+    | '/_authenticated/character'
     | '/_authenticated/characters'
     | '/_authenticated/clans'
     | '/_authenticated/fandom'
@@ -391,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/archive'
       fullPath: '/archive'
       preLoaderRoute: typeof AuthenticatedArchiveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/character': {
+      id: '/_authenticated/character'
+      path: '/character'
+      fullPath: '/character'
+      preLoaderRoute: typeof AuthenticatedCharacterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/characters': {
@@ -499,6 +518,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAiRoute: typeof AuthenticatedAiRoute
   AuthenticatedArchiveRoute: typeof AuthenticatedArchiveRoute
+  AuthenticatedCharacterRoute: typeof AuthenticatedCharacterRoute
   AuthenticatedCharactersRoute: typeof AuthenticatedCharactersRoute
   AuthenticatedClansRoute: typeof AuthenticatedClansRoute
   AuthenticatedFandomRoute: typeof AuthenticatedFandomRoute
@@ -519,6 +539,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAiRoute: AuthenticatedAiRoute,
   AuthenticatedArchiveRoute: AuthenticatedArchiveRoute,
+  AuthenticatedCharacterRoute: AuthenticatedCharacterRoute,
   AuthenticatedCharactersRoute: AuthenticatedCharactersRoute,
   AuthenticatedClansRoute: AuthenticatedClansRoute,
   AuthenticatedFandomRoute: AuthenticatedFandomRoute,

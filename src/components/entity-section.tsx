@@ -183,6 +183,14 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
   const [dossierTab, setDossierTab] = useState<"lore" | "powers" | "bonds" | "progress">("lore");
   const [seasonIdx, setSeasonIdx] = useState(0);
   const { data: seriesRows } = useQuery({ ...characterSeriesQuery(e.id), enabled: e.kind === "character" });
+  const { data: charAbilities } = useQuery({
+    queryKey: ["character-abilities", e.id],
+    enabled: e.kind === "character",
+    queryFn: async () => {
+      const { data } = await supabase.from("character_abilities").select("*").eq("entity_id", e.id);
+      return data ?? [];
+    },
+  });
   const { data: allChars } = useQuery({ ...entitiesQuery(["character"]), enabled: e.kind === "character" && dossierTab === "progress" });
   const { data: compareRows } = useQuery({ ...characterSeriesQuery(journeyCompareId), enabled: !!journeyCompareId });
   const compareSeasons = (compareRows ?? []).filter((r) => r.series);
@@ -497,7 +505,11 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                         <span className="font-medium">{r.series?.title}</span>
                         {r.status && <span className="text-[10px] uppercase text-muted-foreground">{r.status}</span>}
                       </div>
-                      {r.role_in_series && <p className="mb-2 text-xs text-muted-foreground">{r.role_in_series}</p>}
+                      {r.role_in_series ? (
+                        <p className="mb-2 text-xs text-muted-foreground">{r.role_in_series}</p>
+                      ) : (
+                        <p className="mb-2 text-xs italic text-muted-foreground">Missing role / story</p>
+                      )}
                       {scoped.length > 0 && (
                         <div className="mb-2 flex flex-wrap gap-1.5">
                           {scoped.map((n) => (
@@ -508,7 +520,17 @@ function DetailOverlay({ e, from, onClose, isAdmin, onOpen }: { e: Entity; from:
                         </div>
                       )}
                       {/* Per-season ability progression has no dedicated table yet. */}
-                      <p className="text-xs italic text-muted-foreground">No database for this season.</p>
+                      {charAbilities && charAbilities.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {charAbilities.map((ca) => (
+                            <span key={ca.id} className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[10px]">
+                              {abilityDef(ca.ability_key).label}{ca.level ? ` · Lv${ca.level}` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs italic text-muted-foreground">No database for this season.</p>
+                      )}
                     </div>
                   );
                 })

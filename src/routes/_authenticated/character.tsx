@@ -42,7 +42,7 @@ const SEASON_HUES = [262, 200, 150, 20, 340, 90, 180];
 const TABS = [["lore", "Story / Lore"], ["powers", "Abilities and Role"], ["bonds", "Bonds / Connection"], ["progress", "Progress"]] as const;
 type Tab = (typeof TABS)[number][0];
 
-const SANITIZE = /^\[(conflict|Auto-Merged|Auto-Stub|scope|resolved|Merged Info)/i;
+const SANITIZE = /^\[(conflict|merge|Auto-Merged|Auto-Stub|scope|resolved|Merged Info)/i;
 
 function journeyScore(r: { arc_role?: string | null; status?: string | null; role_in_series?: string | null }): number {
   const role = `${r.arc_role ?? ""} ${r.role_in_series ?? ""}`.toLowerCase();
@@ -107,7 +107,17 @@ function CharacterDossier() {
   });
 
   const seasons = useMemo(() => (memberships ?? []).filter((r) => r.series), [memberships]);
-  const cleanNotes = useMemo(() => (notes ?? []).filter((n) => !SANITIZE.test(n.text)), [notes]);
+  const cleanNotes = useMemo(() => {
+    const seen = new Set<string>();
+    const descText = (e?.description ?? "").toLowerCase();
+    return (notes ?? []).filter((n) => {
+      if (SANITIZE.test(n.text)) return false;
+      const key = n.text.replace(/^\[[^\]]*\]\s*/, "").trim().toLowerCase();
+      if (!key || seen.has(key) || descText.includes(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [notes, e?.description]);
   const activeSeason = seasonIdx >= 0 ? seasons[seasonIdx] : null;
   const seasonHue = seasonIdx >= 0 ? SEASON_HUES[seasonIdx % SEASON_HUES.length] : null;
   const accent = seasonHue ? `hsl(${seasonHue} 85% 60%)` : "var(--accent)";

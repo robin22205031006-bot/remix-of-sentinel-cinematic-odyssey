@@ -249,7 +249,7 @@ function CharacterDossier() {
               <KineticText text={e.name.toUpperCase()} />
             </h1>
             <p className="mt-1 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-              {activeSeason ? `${activeSeason.series?.title} · ${ctxSeason ?? "All seasons"}` : "Overview"}
+              {ctxSeason ?? activeSeason?.series?.title ?? "Overview"} · {TABS.find(([t]) => t === tab)?.[1]}
             </p>
 
             {/* Badges — tier, role, alias (all viewports) */}

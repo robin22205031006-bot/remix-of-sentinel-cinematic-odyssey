@@ -10,7 +10,7 @@ import { AbilityBadge } from "@/components/ability-badge";
 import { KineticText } from "@/components/kinetic-text";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
 import { useUiToggles } from "@/lib/ui-toggles";
-import { useAnimationsEnabled } from "@/lib/animations";
+import { useAnimationsEnabled, setAnimationsEnabled } from "@/lib/animations";
 import { sfx } from "@/lib/scu-audio";
 import { toast } from "sonner";
 
@@ -39,8 +39,18 @@ export const Route = createFileRoute("/_authenticated/character")({
 });
 
 const SEASON_HUES = [262, 200, 150, 20, 340, 90, 180];
-const TABS = [["lore", "Story / Lore"], ["powers", "Abilities and Role"], ["bonds", "Bonds / Connection"], ["progress", "Progress"]] as const;
-type Tab = (typeof TABS)[number][0];
+const TABS = [["powers", "Abilities and Role"], ["lore", "Story / Lore"], ["bonds", "Bonds / Connection"]] as const;
+type Tab = (typeof TABS)[number][0] | "progress";
+
+const SERIES_GROUPS: Array<{ key: string; title: string; match: RegExp; seasons: string[] }> = [
+  { key: "sentinels", title: "The Sentinels", match: /sentinel/i, seasons: ["S1", "S2", "S3", "S4", "S5"] },
+  { key: "redline", title: "Redline", match: /redline/i, seasons: ["S1", "S2"] },
+  { key: "divine", title: "Divine Beasts", match: /divine|beast/i, seasons: [] },
+  { key: "bloodlines", title: "Bloodlines", match: /bloodline/i, seasons: [] },
+  { key: "standalone", title: "Standalone Epics", match: /standalone|epic/i, seasons: [] },
+];
+
+const stripMerged = (t: string) => t.replace(/\[\s*Merged Info\s*:?\s*\]\s*:?/gi, "").replace(/Merged Info\s*:/gi, "").trim();
 
 const SANITIZE = /^\[(conflict|merge|Auto-Merged|Auto-Stub|scope|resolved|Merged Info)/i;
 
@@ -87,7 +97,7 @@ function CharacterDossier() {
   const qc = useQueryClient();
   const ui = useUiToggles();
   const animOn = useAnimationsEnabled();
-  const [tab, setTab] = useState<Tab>("lore");
+  const [tab, setTab] = useState<Tab>("powers");
   const [openSeries, setOpenSeries] = useState<string | null>(null);
   const [ctxSeason, setCtxSeason] = useState<string | null>(null);
   const [seasonIdx, setSeasonIdx] = useState(-1);
@@ -148,14 +158,21 @@ function CharacterDossier() {
       <header className="relative z-20 flex items-center justify-between border-b border-white/10 bg-black/60 px-4 py-2 backdrop-blur-xl">
         <Link to="/" className="font-display text-sm tracking-[0.3em] text-accent">SCU</Link>
         <nav className="hidden items-center gap-6 text-[11px] uppercase tracking-widest text-muted-foreground md:flex">
-          <Link to="/" className="hover:text-foreground">Inicio</Link>
-          <Link to="/story" className="hover:text-foreground">Synopsis</Link>
-          <Link to="/characters" className="hover:text-foreground">Cast</Link>
-          <Link to="/archive" className="hover:text-foreground">Gallery</Link>
-          <Link to="/map" className="hover:text-foreground">Trailer</Link>
-          <Link to="/graph" className="text-accent hover:text-foreground">Character Graph</Link>
+          <Link to="/graph" className="text-accent hover:text-foreground">Character Graph of all season together</Link>
         </nav>
         <div className="flex items-center gap-2">
+          <Link to="/graph" className="text-[10px] uppercase tracking-widest text-accent md:hidden">Graph</Link>
+          <button
+            role="switch"
+            aria-checked={animOn}
+            onClick={() => setAnimationsEnabled(!animOn)}
+            className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
+          >
+            <span className="hidden sm:inline">Cinematic Animations</span><span className="sm:hidden">FX</span>
+            <span className={`relative h-3.5 w-7 rounded-full transition-colors ${animOn ? "bg-accent" : "bg-white/20"}`}>
+              <span className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-background transition-all ${animOn ? "left-4" : "left-0.5"}`} />
+            </span>
+          </button>
           <button
             aria-label="Favorite"
             onClick={() => { toggleFavorite({ id: e.id, name: e.name, kind: e.kind }); sfx.pop(); qc.invalidateQueries({ queryKey: ["favorites"] }); }}
@@ -181,22 +198,23 @@ function CharacterDossier() {
         {/* LEFT — series & season accordion */}
         <aside className="hidden min-h-0 flex-col border-r border-white/10 bg-black/50 p-3 lg:flex">
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-            {(allSeries ?? []).map((s, si) => {
+            {SERIES_GROUPS.map((g, si) => {
               const hue = SEASON_HUES[si % SEASON_HUES.length];
-              const open = openSeries === s.id;
-              const list = s.season_names?.length ? s.season_names : s.season_count ? Array.from({ length: s.season_count }, (_, i) => `Season ${i + 1}`) : ["Season 1"];
-              const memberIdx = seasons.findIndex((r) => r.series?.id === s.id || r.series?.title === s.title);
+              const open = openSeries === g.key;
+              const dbSeries = (allSeries ?? []).filter((x) => g.match.test(x.title));
+              const list = g.seasons.length ? g.seasons : dbSeries.length ? dbSeries.map((x) => x.title) : ["Overview"];
+              const memberIdx = seasons.findIndex((r) => g.match.test(r.series?.title ?? ""));
               return (
-                <div key={s.id} className="overflow-hidden rounded-lg border border-white/10">
+                <div key={g.key} className="overflow-hidden rounded-lg border border-white/10">
                   <button
-                    onClick={() => setOpenSeries(open ? null : s.id)}
+                    onClick={() => setOpenSeries(open ? null : g.key)}
                     className={`flex w-full items-center gap-2 p-2 text-left ${open ? "bg-white/10" : "bg-white/5 hover:bg-white/10"}`}
                     style={{ borderLeft: `3px solid hsl(${hue} 85% 60%)` }}
                   >
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-secondary text-[9px] uppercase text-muted-foreground">{s.title.slice(0, 2)}</span>
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-secondary text-[9px] uppercase text-muted-foreground">{g.title.replace(/^The\s+/i, "").slice(0, 2)}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs font-semibold uppercase tracking-wide">{s.title}</span>
-                      <span className="block text-[9px] uppercase text-muted-foreground">{memberIdx >= 0 ? seasons[memberIdx]!.status : `${list.length} seasons`}</span>
+                      <span className="block truncate text-xs font-semibold uppercase tracking-wide">{g.title}</span>
+                      <span className="block text-[9px] uppercase text-muted-foreground">{memberIdx >= 0 ? seasons[memberIdx]!.status ?? "Appears" : g.seasons.length ? `S1–S${g.seasons.length}` : "Collection"}</span>
                     </span>
                     <span className={`text-xs text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}>›</span>
                   </button>
@@ -205,10 +223,10 @@ function CharacterDossier() {
                       {list.map((sn) => (
                         <button
                           key={sn}
-                          onClick={() => { setCtxSeason(sn); setSeasonIdx(memberIdx); }}
-                          className={`rounded px-2 py-1 text-left text-[10px] uppercase tracking-wide ${ctxSeason === sn ? "bg-accent/20 text-accent" : "text-muted-foreground hover:text-foreground"}`}
+                          onClick={() => { setCtxSeason(`${g.title} ${sn}`); setSeasonIdx(memberIdx); }}
+                          className={`rounded px-2 py-1 text-left text-[10px] uppercase tracking-wide ${ctxSeason === `${g.title} ${sn}` ? "bg-accent/20 text-accent" : "text-muted-foreground hover:text-foreground"}`}
                         >
-                          {sn}
+                          {g.seasons.length ? `${g.title} ${sn}` : sn}
                         </button>
                       ))}
                     </div>
@@ -228,10 +246,10 @@ function CharacterDossier() {
           <div className="pointer-events-none absolute inset-0 opacity-[0.05]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
           <div className="relative">
             <h1 className="font-display text-5xl font-black uppercase leading-[0.95] tracking-tight text-white sm:text-6xl" style={{ textShadow: `0 0 30px ${accent}66` }}>
-              <KineticText text={e.name} />
+              <KineticText text={e.name.toUpperCase()} />
             </h1>
             <p className="mt-1 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-              {activeSeason ? `${activeSeason.series?.title} · ${ctxSeason ?? "All seasons"}` : "Overview"}
+              {ctxSeason ?? activeSeason?.series?.title ?? "Overview"} · {TABS.find(([t]) => t === tab)?.[1]}
             </p>
 
             {/* Badges — tier, role, alias (all viewports) */}
@@ -295,7 +313,7 @@ function CharacterDossier() {
                 <div className="space-y-4">
                   {e.description && (
                     <div>
-                      <p className={`whitespace-pre-line text-foreground/85 ${!descOpen && e.description.length > 700 ? "line-clamp-6" : ""}`}>{e.description}</p>
+                      <p className={`whitespace-pre-line text-foreground/85 ${!descOpen && e.description.length > 700 ? "line-clamp-6" : ""}`}>{stripMerged(e.description)}</p>
                       {e.description.length > 700 && (
                         <button onClick={() => setDescOpen((o) => !o)} className="mt-1 text-xs font-semibold uppercase tracking-widest text-accent hover:underline">
                           {descOpen ? "VER MENOS <<" : "VER MAS >>"}
@@ -305,7 +323,7 @@ function CharacterDossier() {
                   )}
                   {scopedNotes.map((n) => (
                     <div key={n.id} className="border-l-2 border-accent/60 pl-3 text-sm">
-                      <p>{n.text}</p>
+                      <p>{stripMerged(n.text)}</p>
                       {n.source && <p className="mt-1 text-xs text-muted-foreground">From {n.source}</p>}
                     </div>
                   ))}

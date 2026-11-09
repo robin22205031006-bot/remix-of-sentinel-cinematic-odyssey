@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Heart, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,6 +94,7 @@ function JourneyBars({ rows }: { rows: Array<{ id: string; series?: { title?: st
 
 function CharacterDossier() {
   const { e: id } = Route.useSearch();
+  const nav = useNavigate();
   const qc = useQueryClient();
   const ui = useUiToggles();
   const animOn = useAnimationsEnabled();
@@ -104,6 +105,28 @@ function CharacterDossier() {
   const [descOpen, setDescOpen] = useState(false);
 
   const { data: e, isError: entityError, error: entityErr } = useQuery({ ...entityByIdQuery(id ?? ""), enabled: !!id });
+  // Auto-select first character when no ?e param — never show an empty dossier.
+  const { data: firstChar } = useQuery({
+    queryKey: ["first-character"],
+    enabled: !id,
+    staleTime: 300_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("entities").select("id").eq("kind", "character").order("name").limit(1).maybeSingle();
+      return data;
+    },
+  });
+  const { data: allChars } = useQuery({
+    queryKey: ["all-characters-short"],
+    enabled: !!id && e?.kind === "character",
+    staleTime: 300_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("entities").select("id, name").eq("kind", "character").order("name");
+      return data ?? [];
+    },
+  });
+  useEffect(() => {
+    if (!id && firstChar?.id) void nav({ to: "/character", search: { e: firstChar.id }, replace: true });
+  }, [id, firstChar?.id, nav]);
   const { data: notes } = useQuery({ ...notesQuery(id ?? ""), enabled: !!id });
   const { data: memberships } = useQuery({ ...characterSeriesQuery(id ?? ""), enabled: !!id && e?.kind === "character" });
   const { data: allSeries } = useQuery({ ...seriesQuery, enabled: e?.kind === "character" });
@@ -194,9 +217,20 @@ function CharacterDossier() {
       </span>
 
       {/* 3-COLUMN GRID */}
-      <div className="relative grid min-h-0 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_350px]">
+      <div className="relative grid min-h-0 grid-cols-1 min-[860px]:grid-cols-[280px_minmax(0,1fr)_350px]">
         {/* LEFT — series & season accordion */}
-        <aside className="hidden min-h-0 flex-col border-r border-white/10 bg-black/50 p-3 lg:flex">
+        <aside className="hidden min-h-0 flex-col border-r border-white/10 bg-black/50 p-3 min-[860px]:flex">
+          {/* Character switcher */}
+          <label className="mb-2 block">
+            <span className="mb-1 block text-[9px] uppercase tracking-[0.3em] text-muted-foreground">Character</span>
+            <select
+              className="w-full rounded-md border border-white/15 bg-black/60 px-2 py-1.5 text-xs"
+              value={id ?? ""}
+              onChange={(ev) => void nav({ to: "/character", search: { e: ev.target.value } })}
+            >
+              {(allChars ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {SERIES_GROUPS.map((g, si) => {
               const hue = SEASON_HUES[si % SEASON_HUES.length];
@@ -264,7 +298,7 @@ function CharacterDossier() {
 
             {/* Mobile series/season selector — left rail is desktop-only */}
             {e.kind === "character" && seasons.length > 0 && (
-              <div className="mt-3 flex gap-1.5 overflow-x-auto lg:hidden [scrollbar-width:none]">
+              <div className="mt-3 flex gap-1.5 overflow-x-auto min-[860px]:hidden [scrollbar-width:none]">
                 <button
                   onClick={() => setSeasonIdx(-1)}
                   className={`shrink-0 rounded-full px-3 py-1 text-[10px] uppercase ${seasonIdx === -1 ? "bg-accent text-accent-foreground" : "bg-white/10 text-muted-foreground"}`}
@@ -282,7 +316,7 @@ function CharacterDossier() {
             )}
 
             {/* Mobile/tablet tab bar — right rail is desktop-only */}
-            <div className="mt-4 flex gap-1.5 lg:hidden" role="tablist">
+            <div className="mt-4 flex gap-1.5 min-[860px]:hidden" role="tablist">
               {TABS.map(([t, label]) => (
                 <button
                   key={t}
@@ -378,7 +412,7 @@ function CharacterDossier() {
         </section>
 
         {/* RIGHT — render + far-right edge tabs */}
-        <div className="relative hidden min-h-0 lg:block">
+        <div className="relative hidden min-h-0 min-[860px]:block">
           {e.image_url && (
             <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
               <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 85%, ${accent} 0%, transparent 65%)`, opacity: 0.25 }} />

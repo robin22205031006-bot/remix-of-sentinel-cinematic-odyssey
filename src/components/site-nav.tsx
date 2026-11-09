@@ -124,6 +124,9 @@ export function SiteNav() {
     return () => { window.removeEventListener("scu-nav-mode", sync); window.removeEventListener("storage", sync); };
   }, []);
 
+  // Dossier route has its own full-screen header — hide global nav there.
+  if (pathname === "/character") return null;
+
   // Render an empty shell until mounted: nav depends on localStorage/auth state
   // that differs between SSR and the client — rendering real content pre-mount
   // caused hydration mismatches.
